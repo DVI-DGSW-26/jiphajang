@@ -1,0 +1,56 @@
+/* 디자인 매뉴얼 토큰 — docs/design-manual.md 3·4·7장. 값이 다르면 PDF가 기준이에요. */
+:root {
+  /* 따뜻한 회색 11단계 */
+  --grey-0: #ffffff;
+  --grey-50: #faf9f6;
+  --grey-100: #f3f1ec;
+  --grey-200: #e6e2d8;
+  --grey-300: #d2cdc2;
+  --grey-400: #b3ada3;
+  --grey-500: #8f8981;
+  --grey-600: #77706a;
+  --grey-700: #5a544f;
+  --grey-800: #3a3633;
+  --grey-900: #2a2724;
+
+  /* 브랜드·상태 */
+  --ink: #3a3633;
+  --ink-strong: #2a2724;
+  --vest: #c9dd3c; /* 진회색 위에서만 */
+  --vest-soft: #eef5c4;
+  --alert: #a8432f;
+  --alert-soft: #f6e6e1;
+
+  /* 역할 토큰 — 화면에서는 단계 대신 이걸 써요 */
+  --paper: var(--grey-0);
+  --paper-warm: var(--grey-50);
+  --line: var(--grey-200);
+  --text-primary: var(--grey-800);
+  --text-secondary: var(--grey-700);
+  --text-tertiary: var(--grey-600);
+  --text-disabled: var(--grey-400);
+
+  /* 글꼴 */
+  --font-logo: "Black Han Sans", sans-serif;
+  --font-sans: "IBM Plex Sans KR", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* 글자 (크기 / 줄높이 · 굵기) */
+  --type-display: 400 32px / 40px var(--font-sans);
+  --type-title: 700 22px / 30px var(--font-sans);
+  --type-heading: 600 17px / 24px var(--font-sans);
+  --type-body: 400 14px / 22px var(--font-sans);
+  --type-body-strong: 600 14px / 22px var(--font-sans);
+  --type-small: 500 12px / 18px var(--font-sans);
+  --type-label: 600 11px / 16px var(--font-sans);
+  --type-number: 500 13px / 20px var(--font-mono);
+
+  /* 간격·모서리·폭 */
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 40px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --max-width: 1320px;
+}
