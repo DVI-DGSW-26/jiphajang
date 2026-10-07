@@ -1,0 +1,23 @@
+# OS / 편집기
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# 의존성 / 빌드
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+
+# 환경 변수
+.env
+.env.*
+!.env.example
+
+# 로그
+*.log
+npm-debug.log*
