@@ -12,6 +12,7 @@
 | 경로 | 내용 |
 |---|---|
 | `docs/design-manual.pdf` | 디자인 매뉴얼 원본 (v1, 2026-10) |
+| `docs/requirements.md` | 확정된 요구사항, 받을 자료, 미정 항목 |
 | `docs/design-manual.md` | 개발용 요약: 토큰·글꼴·문구·부품·출력물 규칙 |
 | `assets/logo/` | 로고(흰 바탕용·진한 바탕용), 앱 아이콘 SVG/PNG |
 
