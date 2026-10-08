@@ -295,3 +295,14 @@ a.jh-button {
 .jh-result-card__summary {
   color: var(--text-secondary);
 }
+
+/* 가짜 서버로 띄웠을 때만 */
+.jh-mock-banner {
+  margin: 0;
+  padding: 6px var(--space-3);
+  background: var(--grey-100);
+  border-bottom: 1px solid var(--line);
+  color: var(--text-secondary);
+  font: var(--type-small);
+  text-align: center;
+}

@@ -18,6 +18,23 @@ export class ApiError extends Error {
 const COOKIE_AUTH_PATHS = new Set(['/auth/refresh', '/auth/logout']);
 
 /**
+ * 오류 문구를 꺼내요. 서버와 맞춘 모양은 `{ "message": "사람이 읽을 문구" }`예요.
+ * JSON이 아니면 본문 글자를 그대로 써요(프록시가 준 HTML 오류 쪽은 너무 길어 버려요).
+ */
+async function readErrorMessage(response: Response): Promise<string> {
+  const text = await response.text().catch(() => '');
+  try {
+    const body: unknown = JSON.parse(text);
+    if (body && typeof body === 'object' && 'message' in body && typeof body.message === 'string') {
+      return body.message;
+    }
+  } catch {
+    // JSON이 아니에요. 아래에서 글자 그대로 써요.
+  }
+  return text.trimStart().startsWith('<') ? '' : text.trim();
+}
+
+/**
  * 서버를 부르는 유일한 자리. 화면에서 `fetch`를 직접 쓰지 않아요.
  *
  * 토큰이 없으면 헤더를 붙이지 않아요 — 서버가 401을 주고 화면이 로그인으로 안내해요.
@@ -37,7 +54,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
 
   if (!response.ok) {
     // 서버가 준 문구가 있으면 그대로 보여줘요. 화면에서 이유를 지어내지 않아요.
-    const message = await response.text().catch(() => '');
+    const message = await readErrorMessage(response);
     throw new ApiError(response.status, message || `서버가 ${response.status}로 답했어요.`);
   }
 
