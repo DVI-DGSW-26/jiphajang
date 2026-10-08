@@ -66,3 +66,74 @@ body {
 .jh-empty p {
   margin: 0;
 }
+
+/* 버튼 — 디자인 매뉴얼 6장. 주 버튼은 ink 바탕 + vest 글자, 한 화면에 하나 */
+.jh-button {
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: var(--type-body-strong);
+  cursor: pointer;
+}
+
+.jh-button:hover {
+  border-color: var(--grey-300);
+}
+
+.jh-button:active {
+  background: var(--grey-100);
+}
+
+.jh-button--primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--vest);
+}
+
+.jh-button--primary:hover {
+  background: var(--ink-strong);
+  border-color: var(--ink-strong);
+}
+
+.jh-button--primary:active {
+  background: var(--ink);
+  transform: scale(0.98);
+}
+
+@media (max-width: 640px) {
+  .jh-button {
+    min-height: 44px;
+  }
+}
+
+/* 로그인 전후 화면 */
+.jh-auth {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-5) var(--space-3);
+}
+
+.jh-auth__box {
+  width: 100%;
+  max-width: 440px;
+}
+
+.jh-auth__logo {
+  display: block;
+  height: 32px;
+  margin-bottom: var(--space-4);
+}
+
+.jh-auth__box p {
+  margin: 0 0 var(--space-4);
+  color: var(--text-secondary);
+}
+
+.jh-auth__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
