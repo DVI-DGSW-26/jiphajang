@@ -1,4 +1,5 @@
 import logoReverse from '../assets/logo/jiphajang-logo-reverse.svg';
+import { EmptyState } from './components/EmptyState.tsx';
 
 export function App() {
   return (
@@ -10,9 +11,10 @@ export function App() {
       </header>
       <main className="jh-main">
         <h1 className="jh-title">출하 원장</h1>
-        <div className="jh-empty">
-          <p>아직 등록한 Invoice가 없어요.</p>
-        </div>
+        <EmptyState
+          title="아직 올린 Invoice가 없어요"
+          description="Invoice 엑셀 파일을 올리면 읽어서 원장에 넣어요."
+        />
       </main>
     </>
   );

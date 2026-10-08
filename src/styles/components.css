@@ -1,0 +1,449 @@
+/*
+ * 화면 부품 — 디자인 매뉴얼 7장(화면 부품), 8장(값의 출처), 9장(상태 · 숫자 · 레이아웃).
+ * 색·크기는 tokens.css의 토큰만 써요. 부품 코드는 src/components/에 있어요.
+ */
+
+/* ── 버튼 ─────────────────────────────────────────────
+ * 주 버튼은 ink 바탕 + vest 글자, 한 화면에 하나. 높이 PC 36px · 휴대폰 44px */
+.jh-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font: var(--type-body-strong);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.jh-button:hover {
+  border-color: var(--grey-300);
+}
+
+.jh-button:active {
+  background: var(--grey-100);
+}
+
+.jh-button--primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--vest);
+}
+
+.jh-button--primary:hover {
+  background: var(--ink-strong);
+  border-color: var(--ink-strong);
+}
+
+.jh-button--primary:active {
+  background: var(--ink);
+  transform: scale(0.98);
+}
+
+/* 삭제처럼 되돌릴 수 없는 일. 확인창 안에서는 alert 바탕 */
+.jh-button--danger {
+  color: var(--alert);
+}
+
+.jh-button--danger-fill {
+  background: var(--alert);
+  border-color: var(--alert);
+  color: var(--paper);
+}
+
+.jh-button--danger-fill:hover {
+  border-color: var(--alert);
+  filter: brightness(0.92);
+}
+
+.jh-button:disabled,
+.jh-button[aria-busy="true"] {
+  background: var(--grey-50);
+  border-color: var(--line);
+  color: var(--text-disabled);
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* 파일 형식 꼬리표: XLSX · PDF */
+.jh-button__ext {
+  padding: 0 4px;
+  border-radius: 3px;
+  color: var(--text-tertiary);
+  font: 500 11px / 16px var(--font-mono);
+}
+
+.jh-button--primary .jh-button__ext {
+  background: rgb(255 255 255 / 12%);
+  color: var(--paper);
+}
+
+/* ── 입력칸 ───────────────────────────────────────────
+ * 라벨은 항상 위. 자동으로 채운 칸은 paper-warm + 출처 표시. 오류 문구는 칸 아래 */
+.jh-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.jh-field__label {
+  color: var(--text-tertiary);
+  font: var(--type-small);
+}
+
+.jh-field__control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.jh-input {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 12px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font: var(--type-body);
+}
+
+.jh-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.jh-input:hover {
+  border-color: var(--grey-300);
+}
+
+.jh-input:focus-visible {
+  border-color: var(--ink);
+  outline: 1px solid var(--ink);
+  outline-offset: 0;
+}
+
+.jh-input--auto {
+  padding-right: 64px;
+  background: var(--paper-warm);
+  color: var(--text-secondary);
+}
+
+.jh-input--number {
+  font: var(--type-number);
+  text-align: right;
+}
+
+.jh-input--auto.jh-input--number {
+  padding-right: 64px;
+}
+
+.jh-input[aria-invalid="true"] {
+  border-color: var(--alert);
+}
+
+.jh-input:disabled {
+  background: var(--grey-50);
+  color: var(--text-disabled);
+}
+
+.jh-field__error {
+  margin: 0;
+  color: var(--alert);
+  font: var(--type-small);
+  font-weight: 600;
+}
+
+.jh-field__hint {
+  margin: 0;
+  color: var(--text-tertiary);
+  font: var(--type-small);
+  font-weight: 400;
+}
+
+/* ── 출처 표시: 판독 · 계산 · 마스터 (매뉴얼 8장) ──── */
+.jh-source {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--text-tertiary);
+  font: var(--type-label);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.jh-field__control .jh-source {
+  position: absolute;
+  right: 10px;
+}
+
+/* ── 배지 ─────────────────────────────────────────────
+ * 상태는 색만으로 구분하지 않고 글자를 함께 써요 */
+.jh-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  font: var(--type-label);
+  white-space: nowrap;
+}
+
+.jh-badge--ok {
+  background: var(--vest-soft);
+  color: var(--text-primary);
+}
+
+.jh-badge--bad {
+  background: var(--alert-soft);
+  color: var(--alert);
+}
+
+.jh-badge--wait {
+  background: var(--grey-100);
+  color: var(--text-secondary);
+}
+
+.jh-badge--note {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--text-tertiary);
+}
+
+/* 종류 구분(한국 출하 · 현지 출하)에만 */
+.jh-badge--kind {
+  background: var(--ink);
+  color: var(--vest);
+}
+
+/* ── 표 ───────────────────────────────────────────────
+ * 넓은 표만 표 안에서 스크롤. 머리줄과 첫 열은 고정 */
+.jh-table-wrap {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.jh-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font: var(--type-body);
+}
+
+.jh-table th,
+.jh-table td {
+  height: 40px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  text-align: left;
+}
+
+.jh-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--paper-warm);
+  color: var(--text-secondary);
+  font: var(--type-small);
+  font-weight: 600;
+}
+
+.jh-table th:first-child,
+.jh-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: inherit;
+}
+
+.jh-table thead th:first-child {
+  z-index: 3;
+}
+
+.jh-table tbody tr {
+  background: var(--paper);
+}
+
+.jh-table tbody tr:hover {
+  background: var(--grey-100);
+}
+
+.jh-table .jh-table__num {
+  font: var(--type-number);
+  text-align: right;
+}
+
+.jh-table thead .jh-table__num {
+  font: var(--type-small);
+  font-weight: 600;
+}
+
+.jh-table th .jh-source {
+  margin-left: 4px;
+  vertical-align: 1px;
+}
+
+/* 자동으로 채운 칸 */
+.jh-table td.jh-table__auto {
+  background: var(--paper-warm);
+  color: var(--text-secondary);
+}
+
+/* 합계줄 위에 진한 선 */
+.jh-table tfoot td {
+  background: var(--paper);
+  border-top: 1.5px solid var(--ink);
+  border-bottom: 0;
+  font-weight: 600;
+}
+
+.jh-table tfoot .jh-table__num {
+  font-weight: 600;
+}
+
+/* 확인이 필요한 행 */
+.jh-table tbody tr.jh-table__row--bad,
+.jh-table tbody tr.jh-table__row--bad td {
+  background: var(--alert-soft);
+}
+
+.jh-negative {
+  color: var(--alert);
+}
+
+/* ── 알림(토스트) ─────────────────────────────────────
+ * 화면 아래 가운데, 2~4초, 한 번에 하나 */
+.jh-toast-region {
+  position: fixed;
+  right: var(--space-3);
+  bottom: var(--space-4);
+  left: var(--space-3);
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.jh-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 560px;
+  padding: 11px 18px;
+  background: var(--ink);
+  border-radius: var(--radius-lg);
+  color: var(--paper);
+  font: var(--type-body-strong);
+  pointer-events: auto;
+}
+
+.jh-toast::before {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--vest);
+  content: "";
+}
+
+.jh-toast--bad::before {
+  background: var(--paper);
+}
+
+/* ── 확인창 ───────────────────────────────────────────
+ * 왼쪽은 항상 “닫기”. 되돌릴 수 없는 일에만 */
+.jh-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+  background: rgb(42 39 36 / 45%);
+}
+
+.jh-dialog {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--space-4);
+  background: var(--paper);
+  border-radius: var(--radius-lg);
+}
+
+.jh-dialog__title {
+  margin: 0 0 6px;
+  font: var(--type-heading);
+}
+
+.jh-dialog__body {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.jh-dialog__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: var(--space-4);
+}
+
+/* ── 빈 화면 ──────────────────────────────────────────
+ * 빈 표 대신 지금 상황과 다음 행동 */
+.jh-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-5) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.jh-empty__icon {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--text-tertiary);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.jh-empty__title {
+  margin: 8px 0 4px;
+  font: var(--type-heading);
+}
+
+.jh-empty__body {
+  max-width: 420px;
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.jh-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .jh-button,
+  .jh-input {
+    min-height: 44px;
+  }
+}
