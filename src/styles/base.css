@@ -67,13 +67,13 @@ body {
   margin: 0;
 }
 
-/* 버튼 — 디자인 매뉴얼 6장. 주 버튼은 ink 바탕 + vest 글자, 한 화면에 하나 */
+/* 버튼 — 디자인 매뉴얼 7장(화면 부품). 주 버튼은 ink 바탕 + vest 글자, 한 화면에 하나 */
 .jh-button {
   min-height: 36px;
   padding: 0 var(--space-3);
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: var(--text-primary);
   font: var(--type-body-strong);
   cursor: pointer;
