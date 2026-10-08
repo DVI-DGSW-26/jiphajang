@@ -10,6 +10,7 @@ import './styles/components.css';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import { App } from './App.tsx';
 import { AuthCallback } from './auth/AuthCallback.tsx';
 import { AuthGate } from './auth/AuthGate.tsx';
@@ -20,13 +21,14 @@ if (!root) throw new Error('#root 요소가 없어요. index.html을 확인해 �
 
 createRoot(root).render(
   <StrictMode>
-    <ToastProvider>
-      {/* 화면 이동 라이브러리가 아직 없어요. 로그인 콜백 하나만 주소로 갈라요. */}
-      {window.location.pathname === '/auth/callback' ? (
-        <AuthCallback />
-      ) : (
-        <AuthGate>{() => <App />}</AuthGate>
-      )}
-    </ToastProvider>
+    <BrowserRouter>
+      <ToastProvider>
+        <Routes>
+          {/* 로그인 콜백은 로그인 전에 열려야 해서 AuthGate 바깥에 둬요 */}
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="*" element={<AuthGate>{(me) => <App me={me} />}</AuthGate>} />
+        </Routes>
+      </ToastProvider>
+    </BrowserRouter>
   </StrictMode>,
 );
