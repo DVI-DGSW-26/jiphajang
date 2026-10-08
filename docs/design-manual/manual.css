@@ -26,6 +26,10 @@ body {
   font: var(--type-body);
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
+  /* 한글은 어절 단위로 줄을 바꾸고, 마지막 줄에 한 글자만 남지 않게 해요 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 .page {
@@ -115,6 +119,7 @@ code,
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   font: 500 11.5px / 18px var(--font-mono);
+  white-space: nowrap;
 }
 .mono {
   font-family: var(--font-mono);
