@@ -6,23 +6,31 @@ import '@fontsource/ibm-plex-mono/500.css';
 import '@fontsource/black-han-sans/400.css';
 import './styles/tokens.css';
 import './styles/base.css';
+import './styles/components.css';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import { App } from './App.tsx';
 import { AuthCallback } from './auth/AuthCallback.tsx';
 import { AuthGate } from './auth/AuthGate.tsx';
+import { ToastProvider } from './components/Toast.tsx';
+import { MockBanner } from './layout/MockBanner.tsx';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root 요소가 없어요. index.html을 확인해 주세요.');
 
 createRoot(root).render(
   <StrictMode>
-    {/* 화면 이동 라이브러리가 아직 없어요. 로그인 콜백 하나만 주소로 갈라요. */}
-    {window.location.pathname === '/auth/callback' ? (
-      <AuthCallback />
-    ) : (
-      <AuthGate>{() => <App />}</AuthGate>
-    )}
+    <BrowserRouter>
+      <ToastProvider>
+        <MockBanner />
+        <Routes>
+          {/* 로그인 콜백은 로그인 전에 열려야 해서 AuthGate 바깥에 둬요 */}
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="*" element={<AuthGate>{(me) => <App me={me} />}</AuthGate>} />
+        </Routes>
+      </ToastProvider>
+    </BrowserRouter>
   </StrictMode>,
 );

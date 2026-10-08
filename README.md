@@ -23,8 +23,9 @@ npm run dev            # http://localhost:5173
 | 명령 | 하는 일 |
 |---|---|
 | `npm run dev` | 개발 서버 |
+| `npm run dev:mock` | 서버 없이 가짜 서버로 띄우기. 로그인 흐름까지 흉내 내요 (`mock/api.ts`, 상황은 `.env.example` 참고) |
 | `npm run build` | 타입 검사 후 `dist/`에 빌드 |
-| `npm run typecheck` | 타입 검사 |
+| `npm run typecheck` | 타입 검사 (화면 코드와 노드 쪽 코드를 따로) |
 | `npm run lint` / `npm run format` | Biome 검사 / 자동 정리 |
 | `npm test` | Vitest 테스트 |
 | `npm run manual:pdf` | 디자인 매뉴얼 HTML을 PDF로 다시 뽑기 (Chrome·Edge 필요) |
@@ -39,6 +40,7 @@ React 19 · Vite · TypeScript · Biome · Vitest. 글꼴은 사내망에서도 
 | `docs/design-manual.pdf` | 디자인 매뉴얼 (버전 2, 2026-10) |
 | `docs/design-manual/` | 매뉴얼 PDF의 원본 HTML. 고친 뒤 `npm run manual:pdf` |
 | `docs/requirements.md` | 확정된 요구사항, 받을 자료, 미정 항목 |
+| `docs/deploy.md` | 배포 안내 (서버가 화면을 같이 내보낼 때) |
 | `docs/source-analysis.md` | 받은 업무 자료(Invoice·결과 엑셀) 구조 분석과 확인 질문 |
 | `docs/design-manual.md` | 개발용 요약: 토큰·글꼴·문구·부품·출력물 규칙 |
 | `docs/scope-schedule.pdf` | 개발 범위 및 일정 원본 (2026-08-27) |
