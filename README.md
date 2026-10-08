@@ -39,6 +39,7 @@ React 19 · Vite · TypeScript · Biome · Vitest. 글꼴은 사내망에서도 
 | `docs/design-manual.pdf` | 디자인 매뉴얼 (버전 2, 2026-10) |
 | `docs/design-manual/` | 매뉴얼 PDF의 원본 HTML. 고친 뒤 `npm run manual:pdf` |
 | `docs/requirements.md` | 확정된 요구사항, 받을 자료, 미정 항목 |
+| `docs/source-analysis.md` | 받은 업무 자료(Invoice·결과 엑셀) 구조 분석과 확인 질문 |
 | `docs/design-manual.md` | 개발용 요약: 토큰·글꼴·문구·부품·출력물 규칙 |
 | `docs/scope-schedule.pdf` | 개발 범위 및 일정 원본 (2026-08-27) |
 | `docs/scope-schedule.md` | 개발용 요약: 개발 대상·주차별 일정·선행자료 |
