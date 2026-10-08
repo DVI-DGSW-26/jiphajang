@@ -19,9 +19,11 @@
 
 ## 받을 자료
 
-- [ ] 결과물별 항목과 양식(수출신고취합·현지 Invoice List·수금현황·U71X Offset·재고/선적 관리·재고/출하 현황). 실데이터는 바꿔서 받아요. 그 밖의 선행자료는 [`scope-schedule.md`](scope-schedule.md) 6장
-- [ ] Invoice 양식 샘플(한국 5종·현지 6종) — 나중에 보내 주기로 했어요. 받으면 엑셀인지 PDF인지 보고 판독 방식을 정해요
-- [ ] 엑셀 샘플(지금 쓰는 보고서 파일)
+- [x] Invoice 양식 샘플(한국 5개·현지 6개, 엑셀) → [`source-analysis.md`](source-analysis.md). 실데이터 그대로 받아서 원본은 저장소에 넣지 않아요
+- [x] 결과 엑셀 샘플: 수출신고취합, 현지 출하 Invoice List, 현지 창고 재고 및 선적 관리, 현지 창고 재고 및 출하 현황
+- [ ] **현지 수금현황, U71X Offset Cost Review** 원본과 계산 기준 (받은 자료에 없어요)
+- [ ] 물류팀 확인 질문 답변 → [`source-analysis.md`](source-analysis.md) 10장
+- [ ] 그 밖의 선행자료는 [`scope-schedule.md`](scope-schedule.md) 6장
 - [x] 범위와 일정 → [`scope-schedule.md`](scope-schedule.md) (15주, 착수일 미정)
 
 ## 미정
