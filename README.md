@@ -27,6 +27,7 @@ npm run dev            # http://localhost:5173
 | `npm run typecheck` | 타입 검사 |
 | `npm run lint` / `npm run format` | Biome 검사 / 자동 정리 |
 | `npm test` | Vitest 테스트 |
+| `npm run manual:pdf` | 디자인 매뉴얼 HTML을 PDF로 다시 뽑기 (Chrome·Edge 필요) |
 
 React 19 · Vite · TypeScript · Biome · Vitest. 글꼴은 사내망에서도 뜨도록 `@fontsource`로 함께 묶어요.
 
@@ -35,7 +36,8 @@ React 19 · Vite · TypeScript · Biome · Vitest. 글꼴은 사내망에서도 
 | 경로 | 내용 |
 |---|---|
 | `src/` | 화면 소스. 디자인 토큰은 `src/styles/tokens.css` |
-| `docs/design-manual.pdf` | 디자인 매뉴얼 원본 (v1, 2026-10) |
+| `docs/design-manual.pdf` | 디자인 매뉴얼 (버전 2, 2026-10) |
+| `docs/design-manual/` | 매뉴얼 PDF의 원본 HTML. 고친 뒤 `npm run manual:pdf` |
 | `docs/requirements.md` | 확정된 요구사항, 받을 자료, 미정 항목 |
 | `docs/design-manual.md` | 개발용 요약: 토큰·글꼴·문구·부품·출력물 규칙 |
 | `docs/scope-schedule.pdf` | 개발 범위 및 일정 원본 (2026-08-27) |
