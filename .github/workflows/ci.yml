@@ -1,0 +1,42 @@
+# PR과 develop·main에 올라올 때마다 린트·타입 검사·테스트·빌드를 돌려요.
+# main에 올라오면 빌드 결과(dist/)를 내려받을 수 있게 남겨요 — 서버 담당이 배포에 써요(docs/deploy.md).
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx vite build
+
+      - name: 빌드 결과 남기기 (main만)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: jiphajang-dist-${{ github.sha }}
+          path: dist/
+          retention-days: 30
