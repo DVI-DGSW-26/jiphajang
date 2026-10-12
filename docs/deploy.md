@@ -12,6 +12,11 @@
 | GitHub에서 내려받기 | `main`에 머지될 때마다 GitHub Actions가 빌드해서 `jiphajang-dist-<커밋>`으로 30일 남겨요. 저장소 **Actions → CI → 해당 실행 → Artifacts** |
 | 직접 빌드 | Node 24 이상에서 `npm ci && npm run build` → `dist/` |
 
+**테스트 서버는 자동으로 올라가요.** `develop`에 머지되면 `.github/workflows/deploy-test.yml`이 빌드해서 서버의 화면 폴더에
+올리고(`dist.new` → `dist` 바꿔치기, 직전 화면은 `dist.old`), 사이트가 새 빌드를 내보내는지 확인해요. 서버를 다시 띄우지 않아요.
+서버 주소와 접속 정보는 공개 저장소라 코드에 적지 않고 시크릿(`SSH_HOST`, `SSH_PORT`, `SSH_USER`, `SSH_PRIVATE_KEY`,
+`SITE_URL`)으로 받아요. 운영(`main`)은 운영 주소가 정해진 뒤 추가해요.
+
 **API 주소는 빌드할 때 정해져요.** 화면은 기본으로 같은 주소의 `/api`로 요청해요. 다른 경로를 쓰려면 빌드 전에
 `VITE_API_BASE_URL`을 넣어야 해요(예: `VITE_API_BASE_URL=/backend npm run build`). 배포한 뒤에는 바꿀 수 없어요.
 
