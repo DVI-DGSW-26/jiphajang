@@ -268,8 +268,10 @@
   background: inherit;
 }
 
+/* 첫 열은 바탕을 행에서 물려받는데, 머리줄 행은 바탕이 없어 비쳐 보여요. 직접 칠해요 */
 .jh-table thead th:first-child {
   z-index: 3;
+  background: var(--paper-warm);
 }
 
 .jh-table tbody tr {
@@ -439,6 +441,365 @@
   justify-content: center;
   gap: 8px;
   margin-top: var(--space-3);
+}
+
+/* ── 글자 버튼 ────────────────────────────────────────
+ * 문장 안에서 쓰는 작은 행동(필터 모두 지우기 등) */
+.jh-link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.jh-link-button:hover {
+  color: var(--ink-strong);
+}
+
+/* ── 목록 화면 머리: 기간 필터 ───────────────────────── */
+.jh-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.jh-list-head__note,
+.jh-list-loading {
+  margin: 0;
+  color: var(--text-secondary);
+  font: var(--type-small);
+}
+
+.jh-period {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.jh-period__legend {
+  padding: 0;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+  font: var(--type-small);
+}
+
+.jh-period__basis {
+  color: var(--text-tertiary);
+}
+
+.jh-period__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.jh-period__date {
+  width: 150px;
+  font: var(--type-number);
+}
+
+.jh-period__presets {
+  display: flex;
+  gap: 4px;
+}
+
+.jh-period__presets .jh-button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--grey-100);
+}
+
+/* ── 엑셀식 표 ────────────────────────────────────────
+ * 표(.jh-table) 위에 고르기·고치기·필터를 얹어요. 행이 많으면 표 상자 안에서 길게 스크롤하고
+ * 머리줄·첫 열·합계줄은 고정이에요. */
+.jh-grid__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+  margin-bottom: 8px;
+}
+
+.jh-grid__count {
+  margin: 0;
+  color: var(--text-secondary);
+  font: var(--type-small);
+}
+
+.jh-grid__count strong {
+  color: var(--text-primary);
+}
+
+.jh-grid__sum {
+  color: var(--text-primary);
+  font: var(--type-number);
+}
+
+.jh-grid__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jh-grid__wrap {
+  max-width: 100%;
+  max-height: max(360px, calc(100dvh - 310px));
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.jh-grid__table {
+  width: max-content;
+  min-width: 100%;
+  user-select: none;
+  cursor: cell;
+}
+
+.jh-grid__table:focus-visible {
+  outline: none;
+}
+
+.jh-grid__wrap:has(.jh-grid__table:focus-visible) {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* biome-ignore lint/style/noDescendingSpecificity: 확인 필요 행 규칙과 다른 속성이라 겹치지 않아요 */
+.jh-grid__table td {
+  height: 32px;
+  /* 위로 스크롤할 때 고정된 머리줄에 가리지 않게 */
+  scroll-margin-top: 41px;
+  scroll-margin-bottom: 41px;
+}
+
+.jh-grid__table thead th {
+  padding-right: 4px;
+}
+
+.jh-grid__head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.jh-grid__table thead .jh-table__num .jh-grid__head {
+  justify-content: flex-end;
+}
+
+.jh-grid__head-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.jh-grid__filter-button {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.jh-grid__filter-button:hover,
+.jh-grid__filter-button[aria-expanded="true"] {
+  border-color: var(--grey-300);
+  background: var(--paper);
+  color: var(--text-primary);
+}
+
+.jh-grid__filter-button[data-active="true"] {
+  border-color: var(--ink);
+  background: var(--paper);
+  color: var(--ink-strong);
+}
+
+/* 직접 입력 칸은 흰 바탕(매뉴얼 원칙 2). 고칠 수 있다는 걸 커서로도 알려요 */
+.jh-grid__table td.jh-grid__cell--editable {
+  cursor: text;
+}
+
+/* 고른 범위 — 어떤 바탕(미색·흰색·확인 필요) 위에서도 보이게 덧칠해요 */
+.jh-grid__table td.jh-grid__cell--selected {
+  background-image: linear-gradient(rgb(58 54 51 / 0.1), rgb(58 54 51 / 0.1));
+}
+
+.jh-grid__table td.jh-grid__cell--focus {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+.jh-grid__table td.jh-grid__cell--saving {
+  color: var(--text-tertiary);
+}
+
+.jh-grid__table td:has(.jh-grid__editor) {
+  position: relative;
+  padding: 0;
+  overflow: visible;
+}
+
+.jh-grid__editor {
+  display: block;
+  height: 100%;
+}
+
+.jh-grid__input {
+  width: 100%;
+  height: 100%;
+  min-width: 80px;
+  padding: 0 8px;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--text-primary);
+  font: var(--type-body);
+  outline: none;
+}
+
+.jh-grid__input--number {
+  font: var(--type-number);
+  text-align: right;
+}
+
+.jh-grid__input[aria-invalid="true"] {
+  border-color: var(--alert);
+}
+
+.jh-grid__error {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 4;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--alert);
+  color: var(--paper);
+  font: var(--type-small);
+  white-space: nowrap;
+}
+
+.jh-grid__no-match {
+  padding: var(--space-4) var(--space-3);
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: normal;
+}
+
+/* 합계줄은 아래에 붙여요 */
+/* biome-ignore lint/style/noDescendingSpecificity: 확인 필요 행 규칙과 다른 속성이라 겹치지 않아요 */
+.jh-grid__table tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+}
+
+.jh-grid__table tfoot td:first-child {
+  z-index: 3;
+  background: var(--paper);
+}
+
+/* ── 필터 메뉴 ──────────────────────────────────────── */
+.jh-filter-menu {
+  position: fixed;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  max-height: min(480px, calc(100dvh - 32px));
+  border: 1px solid var(--grey-300);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  box-shadow: 0 8px 24px rgb(42 39 36 / 0.16);
+  font: var(--type-body);
+}
+
+.jh-filter-menu__sort {
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.jh-filter-menu__item {
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.jh-filter-menu__item:hover,
+.jh-filter-menu__item[aria-pressed="true"] {
+  background: var(--grey-100);
+}
+
+.jh-filter-menu__item[aria-pressed="true"]::after {
+  content: " ✓";
+}
+
+.jh-filter-menu__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 8px;
+}
+
+.jh-filter-menu__search {
+  width: 100%;
+}
+
+.jh-filter-menu__list {
+  overflow: auto;
+  max-height: 240px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 4px 0;
+}
+
+.jh-filter-menu__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.jh-filter-menu__check:hover {
+  background: var(--grey-100);
+}
+
+.jh-filter-menu__none {
+  margin: 0;
+  padding: 8px;
+  color: var(--text-tertiary);
+}
+
+.jh-filter-menu__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 8px;
+  border-top: 1px solid var(--line);
 }
 
 @media (max-width: 640px) {

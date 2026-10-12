@@ -310,3 +310,8 @@ a.jh-button {
   font: var(--type-small);
   text-align: center;
 }
+
+/* 가짜 서버 띠가 있으면 로그인 화면이 그만큼 길어져 스크롤이 생겨요. 띠 높이(31px)를 빼요 */
+.jh-mock-banner ~ .jh-auth {
+  min-height: calc(100dvh - 31px);
+}
