@@ -178,7 +178,7 @@ export function ExportDeclarationsPage({ me, eyebrow }: { me: AuthMe; eyebrow: R
   const loading = state.status === 'loading';
 
   return (
-    <Page title="수출신고취합" eyebrow={eyebrow}>
+    <Page title="수출신고취합" eyebrow={eyebrow} wide>
       <div className="jh-list-head">
         <PeriodFilter value={period} onChange={setPeriod} basis="Ship date" today={today} />
         {!canEdit && (
