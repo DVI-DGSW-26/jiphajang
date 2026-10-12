@@ -21,3 +21,4 @@ coverage/
 # 로그
 *.log
 npm-debug.log*
+*.tsbuildinfo
