@@ -59,15 +59,20 @@ body {
 }
 
 /* 로그인 전후 화면 */
+/* 화면 한가운데보다 조금 위에 둬요. 눈에는 그쪽이 가운데로 보여요 */
 .jh-auth {
   display: flex;
+  align-items: center;
   justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
   padding: var(--space-5) var(--space-3);
 }
 
 .jh-auth__box {
   width: 100%;
   max-width: 440px;
+  margin-bottom: 10vh;
 }
 
 .jh-auth__logo {
