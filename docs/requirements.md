@@ -24,10 +24,11 @@
 
 ## 받을 자료
 
+- [ ] **정확한 자료 다시 받기** (2026-10-12 요청). 지금까지 받은 자료는 실제와 달라요 — 아래 받은 것들과 [`source-analysis.md`](source-analysis.md)는 잠정이에요
 - [x] Invoice 양식 샘플(한국 5개·현지 6개, 엑셀) → [`source-analysis.md`](source-analysis.md). 실데이터 그대로 받아서 원본은 저장소에 넣지 않아요
 - [x] 결과 엑셀 샘플: 수출신고취합, 현지 출하 Invoice List, 현지 창고 재고 및 선적 관리, 현지 창고 재고 및 출하 현황
 - [ ] **현지 수금현황, U71X Offset Cost Review** 원본과 계산 기준 (받은 자료에 없어요)
-- [ ] 물류팀 확인 질문 답변 → [`source-analysis.md`](source-analysis.md) 10장
+- [ ] 물류팀 확인 질문 답변 → [`source-analysis.md`](source-analysis.md) 10장. 정확한 자료를 받은 뒤 다시 정리해서 물어봐요
 - [ ] 그 밖의 선행자료는 [`scope-schedule.md`](scope-schedule.md) 6장
 - [x] 범위와 일정 → [`scope-schedule.md`](scope-schedule.md) (15주, 착수일 미정)
 
