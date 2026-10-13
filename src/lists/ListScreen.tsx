@@ -8,6 +8,7 @@ import { isPeriod, monthPeriod, type Period, PeriodFilter } from '../components/
 import { useToast } from '../components/Toast.tsx';
 import { Page } from '../layout/Page.tsx';
 import { ApiError, type AuthMe } from '../lib/api.ts';
+import { formatFileDate } from '../lib/format.ts';
 import { patchListRow, useList } from '../lib/useList.ts';
 
 /** 주소창의 `?from=&to=`. 없거나 틀리면 이번 달 */
@@ -111,6 +112,15 @@ export function ListScreen<Row>({
           rowKey={rowKey}
           canEdit={canEdit && hasInputs && !loading}
           onEdit={onEdit}
+          download={
+            loading
+              ? null
+              : {
+                  fileName: `${title}_${formatFileDate(period.from)}-${formatFileDate(period.to)}`,
+                  title,
+                  description: `기간 ${period.from} ~ ${period.to} (${basis} 기준) · 작성 ${me.name}`,
+                }
+          }
           toolbar={
             loading && total !== null ? (
               <span className="jh-list-loading" role="status">

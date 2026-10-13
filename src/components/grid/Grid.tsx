@@ -12,8 +12,13 @@ import {
   useState,
 } from 'react';
 import { sumDecimal } from '../../lib/decimal.ts';
+import { downloadFile, safeFileName } from '../../lib/download.ts';
+import { formatDate } from '../../lib/format.ts';
+import { buildXlsx, XLSX_TYPE } from '../../lib/xlsx.ts';
+import { Button } from '../Button.tsx';
 import { SourceTag } from '../SourceTag.tsx';
 import { FilterMenu } from './FilterMenu.tsx';
+import { gridToSheet } from './gridExcel.ts';
 import {
   applyFilters,
   type CellPos,
@@ -45,7 +50,12 @@ type Props<Row> = {
   /** 확인이 필요한 행은 `alert-soft`로 강조해요 */
   rowNeedsCheck?: (row: Row) => boolean;
   totalLabel?: string;
-  /** 표 위 오른쪽에 둘 것(엑셀 다운로드 등) */
+  /**
+   * 엑셀 다운로드 단추를 둬요. 화면에서 거르고 정렬한 행 그대로 내려받아요(열람자도 써요).
+   * `fileName`은 확장자 없이 — `수출신고취합_20261001-20261031`
+   */
+  download?: { fileName: string; title: string; description: string } | null;
+  /** 표 위 오른쪽에 둘 것 */
   toolbar?: ReactNode;
 };
 
@@ -73,6 +83,7 @@ export function Grid<Row>({
   rowNeedsCheck,
   totalLabel = '합계',
   toolbar,
+  download,
 }: Props<Row>) {
   const gridId = useId();
   const tableRef = useRef<HTMLTableElement>(null);
@@ -304,6 +315,23 @@ export function Grid<Row>({
   const hasFilter = Object.keys(filters).length > 0;
   const hasTotal = columns.some((column) => column.total);
 
+  const onDownload = () => {
+    if (!download) return;
+    const filtered = hasFilter
+      ? ` · 필터 적용 (${rows.length.toLocaleString('en-US')}행 중 ${view.length.toLocaleString('en-US')}행)`
+      : '';
+    const sheet = gridToSheet(
+      columns,
+      view,
+      {
+        title: download.title,
+        description: `${download.description} · 출력 ${printedAt()}${filtered}`,
+      },
+      totalLabel,
+    );
+    downloadFile(buildXlsx(sheet), `${safeFileName(download.fileName)}.xlsx`, XLSX_TYPE);
+  };
+
   return (
     <div className="jh-grid">
       <GridStatus
@@ -312,7 +340,18 @@ export function Grid<Row>({
         hasFilter={hasFilter}
         onClearFilters={() => setFilters({})}
         selection={selectionSummary(view, columns, range)}
-        toolbar={toolbar}
+        toolbar={
+          toolbar || download ? (
+            <>
+              {toolbar}
+              {download && (
+                <Button fileType="XLSX" onClick={onDownload} disabled={view.length === 0}>
+                  엑셀 다운로드
+                </Button>
+              )}
+            </>
+          ) : null
+        }
       />
       <div className="jh-grid__wrap">
         {/* role="grid"이면 칸(td)은 저절로 gridcell이에요. 키보드는 표가 받고 고른 칸은 activedescendant로 알려요 */}
@@ -732,4 +771,10 @@ function FilterIcon({ filtered, sorted }: { filtered: boolean; sorted: 'asc' | '
       )}
     </svg>
   );
+}
+
+/** 엑셀에 적는 출력 시각 `2026-10-13 10:05` */
+function printedAt(now = new Date()): string {
+  const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  return `${formatDate(now)} ${time}`;
 }
