@@ -862,3 +862,53 @@
 .jh-connection__text {
   margin: 0;
 }
+
+/* ── 열 너비·열 보기 ──────────────────────────────────
+ * 사람이 너비를 정한 열은 글자를 잘라요(…). 머리줄 오른쪽 끝을 끌어요 */
+.jh-grid__clip {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jh-grid__table td.jh-table__num .jh-grid__clip {
+  margin-left: auto;
+}
+
+/* 좁히면 이름이 잘리고 필터 단추는 남아요 */
+.jh-grid__head[style] .jh-grid__head-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.jh-grid__head[style] .jh-grid__filter-button {
+  flex-shrink: 0;
+}
+
+/* 옆 머리줄 칸이 위에 그려져서 손잡이는 제 칸 안에만 둬요 */
+.jh-grid__resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.jh-grid__resize:hover,
+.jh-grid__resize:active {
+  background: linear-gradient(var(--ink), var(--ink)) right / 2px 100% no-repeat;
+}
+
+.jh-filter-menu__list--tall {
+  max-height: 320px;
+}
+
+.jh-filter-menu__hint {
+  margin: 0;
+  color: var(--text-tertiary);
+  font: var(--type-small);
+}
