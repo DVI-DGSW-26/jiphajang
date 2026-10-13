@@ -395,6 +395,20 @@
   color: var(--text-secondary);
 }
 
+.jh-dialog__body p {
+  margin: 0 0 6px;
+}
+
+.jh-dialog__body [role="alert"] {
+  color: var(--text-primary);
+}
+
+.jh-dialog__note {
+  margin: 8px 0 0;
+  color: var(--text-tertiary);
+  font: var(--type-small);
+}
+
 .jh-dialog__actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

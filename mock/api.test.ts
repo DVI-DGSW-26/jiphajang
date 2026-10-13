@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { handleMock, MOCK_TOKEN_PREFIX, type MockOptions, readMockOptions } from './api.ts';
 
-const ok: MockOptions = { role: 'REPORTER', scenario: 'ok', name: '홍길동', scale: 1 };
+const ok: MockOptions = { role: 'REPORTER', scenario: 'ok', name: '홍길동', scale: 1, tokenTtl: 0 };
 const redirect = encodeURIComponent('http://localhost:5173/auth/callback');
 
 test('로그인하면 콜백 주소의 fragment로 토큰을 돌려보내요', () => {
@@ -51,6 +51,7 @@ test('환경 변수로 상황을 골라요. 모르는 값은 기본값이에요'
     scenario: 'no-group',
     name: '김철수',
     scale: 1,
+    tokenTtl: 0,
   });
   expect(readMockOptions({ MOCK_SCENARIO: 'weird' }).scenario).toBe('ok');
 });
@@ -178,4 +179,18 @@ test('가짜 수량·금액은 음수가 없어요', () => {
     ok,
   ).json as { items: { totalQty: number; amount: string }[] };
   expect(body.items.every((row) => row.totalQty > 0 && !row.amount.startsWith('-'))).toBe(true);
+});
+
+test('MOCK_TOKEN_TTL을 정하면 토큰이 그 뒤 끝나고 갱신도 401이에요', () => {
+  const short = { ...ok, tokenTtl: 60 };
+  const me = (now: number) =>
+    handleMock(
+      { method: 'GET', url: '/auth/me', authorization: `Bearer ${MOCK_TOKEN_PREFIX}.1000` },
+      short,
+      now,
+    ).status;
+  expect(me(1000 + 59_000)).toBe(200);
+  expect(me(1000 + 60_000)).toBe(401);
+  expect(handleMock({ method: 'GET', url: '/auth/refresh' }, short).status).toBe(401);
+  expect(readMockOptions({ MOCK_TOKEN_TTL: '60' }).tokenTtl).toBe(60);
 });

@@ -144,3 +144,44 @@ export function readCallbackHash(hash: string): { token?: string; error?: string
     ...(error ? { error } : {}),
   };
 }
+
+/**
+ * 로그인이 끝났을 때 **새 창에서** 다시 로그인해요. 이 창은 그대로라 고치던 값이 남아요.
+ * 돌아온 토큰은 콜백 창이 이 창에 건네고 닫혀요 (`sendLoginToOpener`).
+ *
+ * @returns 팝업이 막혔으면 `null`
+ */
+export function openLoginWindow(): Window | null {
+  return window.open(loginUrl(), 'jh-login', 'popup,width=520,height=720');
+}
+
+/** 팝업과 여는 창이 주고받는 표시 */
+const LOGIN_MESSAGE = 'jh.login';
+
+/**
+ * 콜백이 팝업 안에서 열렸으면 토큰을 여는 창에 건네요. **같은 출처에만** 보내요.
+ * @returns 건넸으면 `true` — 팝업은 닫으면 돼요
+ */
+export function sendLoginToOpener(token: string): boolean {
+  const opener = window.opener as Window | null;
+  if (!opener || opener === window) return false;
+  opener.postMessage({ type: LOGIN_MESSAGE, token }, window.location.origin);
+  return true;
+}
+
+/** 팝업이 건넨 토큰. 다른 출처·다른 창에서 온 것은 버려요 */
+export function readLoginMessage(event: MessageEvent, from: Window | null): string | null {
+  if (event.origin !== window.location.origin || !from || event.source !== from) return null;
+  const data: unknown = event.data;
+  if (
+    data &&
+    typeof data === 'object' &&
+    'type' in data &&
+    data.type === LOGIN_MESSAGE &&
+    'token' in data &&
+    typeof data.token === 'string'
+  ) {
+    return data.token;
+  }
+  return null;
+}
