@@ -166,3 +166,15 @@ test('출하 원장은 한국 출하와 현지 출하를 날짜순으로 합쳐 
     ).status,
   ).toBe(400);
 });
+
+test('가짜 수량·금액은 음수가 없어요', () => {
+  const body = handleMock(
+    {
+      method: 'GET',
+      url: '/ledger?from=2025-01-01&to=2026-12-31&size=1000',
+      authorization: bearer,
+    },
+    ok,
+  ).json as { items: { totalQty: number; amount: string }[] };
+  expect(body.items.every((row) => row.totalQty > 0 && !row.amount.startsWith('-'))).toBe(true);
+});

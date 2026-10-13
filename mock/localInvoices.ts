@@ -30,11 +30,11 @@ function generate(): LocalInvoiceRow[] {
     if (seed % 2 !== 0 || day.getUTCDay() === 0 || day.getUTCDay() === 6) continue;
     no++;
     const invoiceNo = `MT${date.slice(2).replaceAll('-', '')}A`;
-    const lines = 1 + ((seed >> 4) % 2);
+    const lines = 1 + ((seed >>> 4) % 2);
     for (let line = 0; line < lines; line++) {
-      const part = PARTS[(seed >> (line + 1)) % PARTS.length] ?? PARTS[0];
+      const part = PARTS[((seed >>> 1) + line) % PARTS.length] ?? PARTS[0];
       if (!part) continue;
-      const boxQty = 1 + ((seed >> (line + 6)) % 8);
+      const boxQty = 1 + ((seed >>> (line + 6)) % 8);
       const totalQty = part.setQty * boxQty;
       rows.push({
         id: `${invoiceNo}-${line + 1}`,
@@ -48,7 +48,7 @@ function generate(): LocalInvoiceRow[] {
         boxQty,
         totalQty,
         totalAmount: multiply(part.unitPrice, String(totalQty), 2),
-        carrier: CARRIERS[(seed >> 2) % CARRIERS.length] ?? '',
+        carrier: CARRIERS[(seed >>> 2) % CARRIERS.length] ?? '',
         // 최근 2주는 아직 Tracking#을 안 넣은 것으로 둬요
         trackingNo: isRecent(date) ? null : `TRK${String(seed % 10_000_000).padStart(7, '0')}`,
       });

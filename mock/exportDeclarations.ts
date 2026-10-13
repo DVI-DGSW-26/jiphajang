@@ -50,9 +50,9 @@ function generate(): ExportDeclarationRow[] {
     // 최근 2주는 아직 필증·BL·환율을 안 넣은 것으로 둬요(채울 칸을 보여주려고)
     const filled = !isRecent(date);
     const rate = (1300 + (seed % 12000) / 100).toFixed(2);
-    const lines = 1 + ((seed >> 3) % 3);
+    const lines = 1 + ((seed >>> 3) % 3);
     for (let line = 0; line < lines; line++) {
-      const item = ITEMS[(seed >> (line + 2)) % ITEMS.length] ?? ITEMS[0];
+      const item = ITEMS[((seed >>> 2) + line) % ITEMS.length] ?? ITEMS[0];
       if (!item) continue;
       rows.push(
         withDerived({
@@ -67,7 +67,7 @@ function generate(): ExportDeclarationRow[] {
           itemName: item.name,
           unitPrice: item.unitPrice,
           setQty: item.setQty,
-          boxQty: 1 + ((seed >> (line + 5)) % 20),
+          boxQty: 1 + ((seed >>> (line + 5)) % 20),
           totalQty: 0,
           amountUsd: '0',
           exchangeRate: filled ? rate : null,
