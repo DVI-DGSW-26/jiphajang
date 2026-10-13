@@ -110,6 +110,7 @@ export function ListScreen<Row>({
           columns={columns}
           rows={rows}
           rowKey={rowKey}
+          viewId={path}
           canEdit={canEdit && hasInputs && !loading}
           onEdit={onEdit}
           download={

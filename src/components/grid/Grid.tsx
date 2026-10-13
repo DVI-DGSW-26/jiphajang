@@ -3,6 +3,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   memo,
+  type PointerEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -17,6 +18,7 @@ import { formatDate } from '../../lib/format.ts';
 import { buildXlsx, XLSX_TYPE } from '../../lib/xlsx.ts';
 import { Button } from '../Button.tsx';
 import { SourceTag } from '../SourceTag.tsx';
+import { ColumnMenu } from './ColumnMenu.tsx';
 import { FilterMenu } from './FilterMenu.tsx';
 import { gridToSheet } from './gridExcel.ts';
 import {
@@ -33,6 +35,14 @@ import {
   sortRows,
   toRange,
 } from './gridModel.ts';
+import {
+  clampWidth,
+  EMPTY_VIEW,
+  type GridView,
+  isEmptyView,
+  readGridView,
+  writeGridView,
+} from './gridView.ts';
 import { useRowWindow } from './useRowWindow.ts';
 
 type Props<Row> = {
@@ -58,7 +68,27 @@ type Props<Row> = {
   download?: { fileName: string; title: string; description: string } | null;
   /** 표 위 오른쪽에 둘 것 */
   toolbar?: ReactNode;
+  /**
+   * 보기 설정(정렬·열 너비·숨긴 열)을 이 이름으로 브라우저에 기억해요 — 목록 경로 등.
+   * 없으면 기억하지 않아요 (`gridView.ts`)
+   */
+  viewId?: string;
 };
+
+/** 보이는 열. 사람이 너비를 정한 열은 `clip` 너비로 글자를 잘라요 */
+type ShownColumn<Row> = GridColumn<Row> & { clip?: number };
+
+/** 칸 좌우 여백(`.jh-table td`의 padding)을 뺀 글자 자리 */
+const CELL_PADDING = 20;
+
+function Clip({ width, children }: { width: number | undefined; children: ReactNode }) {
+  if (width === undefined) return <>{children}</>;
+  return (
+    <span className="jh-grid__clip" style={{ width: width - CELL_PADDING }}>
+      {children}
+    </span>
+  );
+}
 
 type Editing = { row: number; col: number; text: string; error?: string };
 type Menu = { key: string; anchor: HTMLElement };
@@ -73,9 +103,10 @@ const ORIGIN: CellPos = { row: 0, col: 0 };
  * - Enter·F2·두 번 누르기·글자 치기로 고쳐요. Enter는 저장하고 아래로, Esc는 취소.
  * - 자동으로 채운 칸(판독·계산·마스터)은 고칠 수 없어요(`docs/design-manual.md` 8장, 고칠지 미정).
  * - 행은 한 화면에 길게 보여요. 머리줄·첫 열·합계줄은 고정이에요.
+ * - 머리줄 오른쪽 끝을 끌어 너비를 바꾸고, “열 보기”에서 열을 숨겨요. `viewId`가 있으면 기억해요.
  */
 export function Grid<Row>({
-  columns,
+  columns: allColumns,
   rows,
   rowKey,
   caption,
@@ -85,6 +116,7 @@ export function Grid<Row>({
   totalLabel = '합계',
   toolbar,
   download,
+  viewId,
 }: Props<Row>) {
   const gridId = useId();
   const tableRef = useRef<HTMLTableElement>(null);
@@ -93,8 +125,37 @@ export function Grid<Row>({
   const bodyRef = useRef<HTMLTableSectionElement>(null);
 
   const [filters, setFilters] = useState<Filters>({});
-  const [sort, setSort] = useState<Sort>(null);
+  const [gridView, setGridView] = useState<GridView>(() =>
+    viewId
+      ? readGridView(
+          viewId,
+          allColumns.map((column) => column.key),
+        )
+      : EMPTY_VIEW,
+  );
+  // 끄는 중의 너비. 손을 떼면 보기 설정에 넣어요
+  const [dragWidth, setDragWidth] = useState<{ key: string; width: number } | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
+  const [columnMenu, setColumnMenu] = useState<HTMLElement | null>(null);
+  const sort = gridView.sort;
+  const setSort = (next: Sort) => setGridView((current) => ({ ...current, sort: next }));
+
+  useEffect(() => {
+    if (viewId) writeGridView(viewId, gridView);
+  }, [viewId, gridView]);
+
+  const hidden = useMemo(() => new Set(gridView.hidden), [gridView.hidden]);
+  const columns = useMemo<ShownColumn<Row>[]>(
+    () =>
+      allColumns
+        .filter((column) => !hidden.has(column.key))
+        .map((column) => {
+          const width =
+            dragWidth?.key === column.key ? dragWidth.width : gridView.widths[column.key];
+          return width === undefined ? column : { ...column, width, clip: width };
+        }),
+    [allColumns, hidden, gridView.widths, dragWidth],
+  );
   const [anchor, setAnchor] = useState<CellPos>(ORIGIN);
   const [focus, setFocus] = useState<CellPos>(ORIGIN);
   const [editing, setEditing] = useState<Editing | null>(null);
@@ -334,6 +395,63 @@ export function Grid<Row>({
   };
 
   const closeMenu = useCallback(() => setMenu(null), []);
+  const closeColumnMenu = useCallback(() => setColumnMenu(null), []);
+
+  const toggleColumn = (key: string) => {
+    setGridView((current) => {
+      if (current.hidden.includes(key)) {
+        return { ...current, hidden: current.hidden.filter((item) => item !== key) };
+      }
+      // 숨긴 열로는 거르거나 정렬하지 않아요 — 보이지 않는 이유로 행이 빠지면 안 돼요
+      return {
+        ...current,
+        hidden: [...current.hidden, key],
+        sort: current.sort?.key === key ? null : current.sort,
+      };
+    });
+    setFilters((current) => {
+      if (!current[key]) return current;
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const resetWidth = (key: string) =>
+    setGridView((current) => {
+      if (!(key in current.widths)) return current;
+      const widths = { ...current.widths };
+      delete widths[key];
+      return { ...current, widths };
+    });
+
+  /** 머리줄 오른쪽 끝을 끌어 너비를 바꿔요. 움직이지 않고 떼면 그대로예요 */
+  const startResize = (event: PointerEvent<HTMLSpanElement>, key: string) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const handle = event.currentTarget;
+    const start = handle.closest('th')?.getBoundingClientRect().width ?? 0;
+    const x = event.clientX;
+    let width = start;
+    handle.setPointerCapture?.(event.pointerId);
+    const move = (moveEvent: globalThis.PointerEvent) => {
+      width = clampWidth(start + moveEvent.clientX - x);
+      setDragWidth({ key, width });
+    };
+    const end = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', end);
+      handle.removeEventListener('pointercancel', end);
+      setDragWidth(null);
+      if (width !== start) {
+        setGridView((current) => ({ ...current, widths: { ...current.widths, [key]: width } }));
+      }
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
+  };
   const menuColumn = menu && columns.find((column) => column.key === menu.key);
   const hasFilter = Object.keys(filters).length > 0;
   const hasTotal = columns.some((column) => column.total);
@@ -375,16 +493,24 @@ export function Grid<Row>({
         onClearFilters={() => setFilters({})}
         selection={selection}
         toolbar={
-          toolbar || download ? (
-            <>
-              {toolbar}
-              {download && (
-                <Button fileType="XLSX" onClick={onDownload} disabled={view.length === 0}>
-                  엑셀 다운로드
-                </Button>
-              )}
-            </>
-          ) : null
+          <>
+            {toolbar}
+            <Button
+              aria-haspopup="dialog"
+              aria-expanded={columnMenu !== null}
+              onClick={(event) => {
+                const target = event.currentTarget;
+                setColumnMenu((current) => (current ? null : target));
+              }}
+            >
+              {hidden.size > 0 ? `열 보기 (${hidden.size}개 숨김)` : '열 보기'}
+            </Button>
+            {download && (
+              <Button fileType="XLSX" onClick={onDownload} disabled={view.length === 0}>
+                엑셀 다운로드
+              </Button>
+            )}
+          </>
         }
       />
       <div className="jh-grid__wrap" ref={wrapRef}>
@@ -423,7 +549,10 @@ export function Grid<Row>({
                       sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined
                     }
                   >
-                    <span className="jh-grid__head">
+                    <span
+                      className="jh-grid__head"
+                      style={column.clip ? { width: column.clip - CELL_PADDING } : undefined}
+                    >
                       <span className="jh-grid__head-label">
                         {column.header}
                         {column.source && <SourceTag source={column.source} />}
@@ -447,6 +576,14 @@ export function Grid<Row>({
                         <FilterIcon filtered={filtered} sorted={sorted} />
                       </button>
                     </span>
+                    {/* 마우스로만 써요. 키보드로는 “열 보기”에서 숨기기·처음 보기로를 써요 */}
+                    <span
+                      className="jh-grid__resize"
+                      aria-hidden="true"
+                      title="끌어서 너비 바꾸기 · 두 번 누르면 원래대로"
+                      onPointerDown={(event) => startResize(event, column.key)}
+                      onDoubleClick={() => resetWidth(column.key)}
+                    />
                   </th>
                 );
               })}
@@ -508,7 +645,9 @@ export function Grid<Row>({
               <tr>
                 {columns.map((column, index) => (
                   <td key={column.key} className={column.numeric ? 'jh-table__num' : undefined}>
-                    {totals[index] ?? (index === 0 ? totalLabel : null)}
+                    <Clip width={column.clip}>
+                      {totals[index] ?? (index === 0 ? totalLabel : null)}
+                    </Clip>
                   </td>
                 ))}
               </tr>
@@ -516,6 +655,23 @@ export function Grid<Row>({
           )}
         </table>
       </div>
+      {columnMenu && (
+        <ColumnMenu
+          columns={allColumns}
+          hidden={hidden}
+          anchor={columnMenu}
+          onToggle={toggleColumn}
+          onReset={
+            isEmptyView(gridView)
+              ? null
+              : () => {
+                  setGridView(EMPTY_VIEW);
+                  setColumnMenu(null);
+                }
+          }
+          onClose={closeColumnMenu}
+        />
+      )}
       {menu && menuColumn && (
         <FilterMenu
           key={menu.key}
@@ -549,7 +705,7 @@ type RowProps<Row> = {
   row: Row;
   rowIndex: number;
   rowKeyValue: string;
-  columns: GridColumn<Row>[];
+  columns: ShownColumn<Row>[];
   /** 이 행이 선택 범위 안이면 범위, 아니면 `null` — 범위 밖 행은 다시 그리지 않아요 */
   selected: Range | null;
   focusCol: number | null;
@@ -631,10 +787,10 @@ function GridRowInner<Row>({
                 }}
                 onCancel={onCancel}
               />
-            ) : column.render ? (
-              column.render(row)
             ) : (
-              displayText(column, row)
+              <Clip width={column.clip}>
+                {column.render ? column.render(row) : displayText(column, row)}
+              </Clip>
             )}
           </td>
         );
