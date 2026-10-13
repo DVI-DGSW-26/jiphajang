@@ -4,7 +4,7 @@ import {
   type ExportDeclarationRow,
 } from '../src/results/exportDeclarations.ts';
 import { mockList } from './list.ts';
-import { addDays, DATE, DECIMAL, eachDay, hash, iso, isRecent, multiply } from './sample.ts';
+import { addDays, DATE, DECIMAL, eachShipment, iso, isRecent, multiply } from './sample.ts';
 
 /**
  * 가짜 수출신고취합 — 화면을 만들 때 볼 예시예요. **실제 고객사·품번·금액이 아니에요.**
@@ -40,13 +40,11 @@ function withDerived(row: ExportDeclarationRow): ExportDeclarationRow {
 function generate(): ExportDeclarationRow[] {
   const rows: ExportDeclarationRow[] = [];
   let no = 0;
-  for (const day of eachDay()) {
-    const date = iso(day);
-    const seed = hash(date);
-    if (seed % 3 !== 0 || day.getUTCDay() === 0) continue;
+  const isShipDay = (day: Date, seed: number) => seed % 3 === 0 && day.getUTCDay() !== 0;
+  for (const { day, date, seed, round } of eachShipment('', isShipDay)) {
     no++;
     const customer = CUSTOMERS[seed % CUSTOMERS.length] ?? CUSTOMERS[0];
-    const invoiceNo = `V${customer?.code}${date.slice(2).replaceAll('-', '')}A`;
+    const invoiceNo = `V${customer?.code}${date.slice(2).replaceAll('-', '')}${round}`;
     // 최근 2주는 아직 필증·BL·환율을 안 넣은 것으로 둬요(채울 칸을 보여주려고)
     const filled = !isRecent(date);
     const rate = (1300 + (seed % 12000) / 100).toFixed(2);

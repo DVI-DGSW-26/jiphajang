@@ -47,3 +47,36 @@ export function addDays(date: Date, days: number): Date {
 
 export const DATE = /^\d{4}-\d{2}-\d{2}$/;
 export const DECIMAL = /^\d+(\.\d+)?$/;
+
+let scale = 1;
+
+/**
+ * 행 수를 몇 배로 늘릴지 — `.env.mock.local`의 `MOCK_SCALE`. 많은 행에서 화면이 느려지지
+ * 않는지 볼 때 써요. 1이면 평소 예시 그대로예요. 첫 요청 전에 정해야 해요(행은 한 번만 만들어요).
+ */
+export function setMockScale(next: number): void {
+  scale = Math.min(Math.max(Math.floor(next) || 1, 1), 100);
+}
+
+/**
+ * 출하가 있는 날마다, `MOCK_SCALE`만큼 Invoice를 돌려줘요. 차수 글자는 A, B, C …
+ * 첫 Invoice는 배수와 상관없이 늘 같아요.
+ */
+export function* eachShipment(
+  salt: string,
+  isShipDay: (day: Date, seed: number) => boolean,
+): Generator<{ day: Date; date: string; seed: number; round: string }> {
+  for (const day of eachDay()) {
+    const date = iso(day);
+    const seed = hash(`${salt}${date}`);
+    if (!isShipDay(day, seed)) continue;
+    for (let copy = 0; copy < scale; copy++) {
+      yield {
+        day,
+        date,
+        seed: copy === 0 ? seed : hash(`${salt}${date}#${copy}`),
+        round: copy < 26 ? String.fromCharCode(65 + copy) : String(copy),
+      };
+    }
+  }
+}
