@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, expect, test, vi } from 'vitest';
 import { ToastProvider } from '../components/Toast.tsx';
@@ -85,4 +85,18 @@ test('서버 오류는 문구와 다시 불러오기 버튼을 보여줘요', as
   renderPage({ name: '홍길동', role: 'REPORTER' });
   expect(await screen.findByText('잠시 뒤 다시 해 주세요.')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: '다시 불러오기' })).toBeInTheDocument();
+});
+
+test('열람자도 엑셀로 내려받아요. 파일 이름은 결과 이름_기간', async () => {
+  respond(200, { items: [row], total: 1 });
+  const createObjectURL = vi.fn(() => 'blob:test');
+  vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+  renderPage({ name: '홍길동', role: 'VIEWER' });
+
+  fireEvent.click(await screen.findByRole('button', { name: /엑셀 다운로드/ }));
+  expect(createObjectURL).toHaveBeenCalledOnce();
+  const link = click.mock.contexts[0] as HTMLAnchorElement;
+  expect(link.download).toBe('수출신고취합_20261001-20261031.xlsx');
+  click.mockRestore();
 });
