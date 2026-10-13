@@ -7,7 +7,9 @@ import {
   startAccountSwitch,
   startLogin,
 } from '../lib/auth.ts';
+import { useSessionExpired } from '../lib/session.ts';
 import { AuthScreen } from './AuthScreen.tsx';
+import { SessionExpiredDialog } from './SessionExpiredDialog.tsx';
 
 type MeState =
   | { status: 'loading' }
@@ -37,12 +39,15 @@ export function AuthGate({ children }: { children: (me: AuthMe) => ReactNode }) 
     return () => controller.abort();
   }, [tokenPresent]);
 
+  const expired = useSessionExpired();
+
   /*
    * 만료 1분 전에 미리 갱신해요. **실패해도 아무 일도 하지 않아요** — 지금 토큰이 죽는
-   * 순간 401이 오고 아래 경로가 그때 로그인으로 보내요. 수명은 서버가 준 값을 써요.
+   * 순간 401이 오고 `apiFetch`가 다시 로그인 창을 띄워요. 수명은 서버가 준 값을 써요.
+   * 다시 로그인하면(`expired`가 풀리면) 새 세션으로 다시 시작해요.
    */
   useEffect(() => {
-    if (!tokenPresent) return;
+    if (!tokenPresent || expired) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let stopped = false;
     const tick = () => {
@@ -58,7 +63,7 @@ export function AuthGate({ children }: { children: (me: AuthMe) => ReactNode }) 
       stopped = true;
       clearTimeout(timer);
     };
-  }, [tokenPresent]);
+  }, [tokenPresent, expired]);
 
   const unauthorized =
     state.status === 'error' && state.error instanceof ApiError && state.error.status === 401;
@@ -122,5 +127,10 @@ export function AuthGate({ children }: { children: (me: AuthMe) => ReactNode }) 
     );
   }
 
-  return <>{children(state.me)}</>;
+  return (
+    <>
+      {children(state.me)}
+      <SessionExpiredDialog me={state.me} />
+    </>
+  );
 }

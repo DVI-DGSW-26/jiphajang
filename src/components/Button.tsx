@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 
 type Variant = 'secondary' | 'primary' | 'danger' | 'danger-fill';
 
@@ -12,6 +12,8 @@ type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> & {
   busyLabel?: string;
   /** 폼 제출 버튼일 때만 `submit` */
   type?: 'button' | 'submit';
+  /** 처음 초점을 줄 때 */
+  ref?: Ref<HTMLButtonElement>;
   children: ReactNode;
 };
 

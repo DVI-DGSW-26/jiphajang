@@ -1,4 +1,5 @@
 import { apiBase, clearToken, getToken, markAuthenticated, setToken } from './auth.ts';
+import { isSessionExpired, waitForLogin } from './session.ts';
 
 /** 서버가 2xx가 아닌 답을 줬어요. 401은 화면이 로그인으로 안내해요 */
 export class ApiError extends Error {
@@ -34,23 +35,58 @@ async function readErrorMessage(response: Response): Promise<string> {
   return text.trimStart().startsWith('<') ? '' : text.trim();
 }
 
-/**
- * 서버를 부르는 유일한 자리. 화면에서 `fetch`를 직접 쓰지 않아요.
- *
- * 토큰이 없으면 헤더를 붙이지 않아요 — 서버가 401을 주고 화면이 로그인으로 안내해요.
- * 여기서 로그인으로 보내지 않아요. 이동은 화면의 일이에요 (`AuthGate`).
- */
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+/** 한 번 보내요. 갱신·재로그인 뒤 같은 요청을 다시 보낼 때도 써요 */
+function send(path: string, init: RequestInit): Promise<Response> {
   const headers = new Headers(init.headers);
   const cookieAuth = COOKIE_AUTH_PATHS.has(path);
   const token = getToken();
   if (!cookieAuth && token) headers.set('Authorization', `Bearer ${token}`);
 
-  const response = await fetch(`${apiBase()}${path}`, {
+  return fetch(`${apiBase()}${path}`, {
     ...init,
     headers,
     ...(cookieAuth ? { credentials: 'include' as const } : {}),
   });
+}
+
+/** `/auth/me`가 한 번 통했는가. 그 뒤의 401만 만료로 봐요 */
+let signedIn = false;
+
+/** 여러 요청이 한꺼번에 401을 받아도 갱신은 한 번만 불러요 */
+let refreshing: Promise<boolean> | null = null;
+
+function refreshAfter401(): Promise<boolean> {
+  refreshing ??= refreshToken()
+    .then(
+      () => true,
+      () => false,
+    )
+    .finally(() => {
+      refreshing = null;
+    });
+  return refreshing;
+}
+
+/**
+ * 서버를 부르는 유일한 자리. 화면에서 `fetch`를 직접 쓰지 않아요.
+ *
+ * 토큰이 없으면 헤더를 붙이지 않아요 — 서버가 401을 주고 화면이 로그인으로 안내해요.
+ * 여기서 로그인으로 보내지 않아요. 이동은 화면의 일이에요 (`AuthGate`).
+ *
+ * **들어온 뒤의 401은 만료예요.** 갱신을 한 번 해 보고, 안 되면 다시 로그인할 때까지
+ * 기다렸다가 같은 요청을 다시 보내요 (`lib/session.ts`). 부른 쪽은 실패를 보지 않아요.
+ * `/auth/*`는 기다리지 않아요 — 로그인 확인 자체라 기다리면 풀리지 않아요.
+ */
+export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  let response = await send(path, init);
+
+  if (response.status === 401 && signedIn && !path.startsWith('/auth/')) {
+    if (!isSessionExpired() && (await refreshAfter401())) response = await send(path, init);
+    while (response.status === 401) {
+      await waitForLogin(init.signal);
+      response = await send(path, init);
+    }
+  }
 
   if (!response.ok) {
     // 서버가 준 문구가 있으면 그대로 보여줘요. 화면에서 이유를 지어내지 않아요.
@@ -76,6 +112,7 @@ export async function fetchMe(signal?: AbortSignal): Promise<AuthMe> {
   const me = await apiFetch<AuthMe>('/auth/me', signal ? { signal } : {});
   // 토큰이 실제로 통했어요. 이제서야 자동 재로그인을 한 번 더 쓸 수 있게 풀어요.
   markAuthenticated();
+  signedIn = true;
   return me;
 }
 
