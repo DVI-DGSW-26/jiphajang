@@ -1,0 +1,121 @@
+# develop에 머지되면 화면을 빌드해서 테스트 서버에 올려요.
+#
+# 서버가 서버 폴더의 web/dist/를 그대로 내보내요. 여기서는 그 폴더를 새 빌드로 바꿔치기만 해요 — 서버를 다시 띄우지 않아요.
+#   1. 빌드(타입 검사 포함). 실패하면 아무것도 올리지 않아서 옛 화면이 그대로 남아요
+#   2. 서버의 web/dist.new/에 올려요
+#   3. dist → dist.old, dist.new → dist 로 이름을 바꿔요. 직전 화면은 dist.old에 한 벌 남아요
+#   4. 사이트가 방금 올린 빌드를 내보내는지 확인해요
+#
+# 공개 저장소라서 서버 주소·접속 정보는 코드에 적지 않고 시크릿으로 받아요(서버 담당이 넣어요).
+#   SSH_HOST, SSH_PORT, SSH_USER, SSH_PRIVATE_KEY(이 저장소 전용 열쇠), SITE_URL(테스트 서버 주소)
+# 시크릿 값은 실행 로그에 *** 로 가려져요. 로그와 요약은 누구나 볼 수 있으니 주소를 따로 찍지 않아요.
+# PR(포크 포함)에서는 돌지 않아요. develop 푸시와 수동 실행에서만 돌아요.
+#
+# 운영(main)은 운영 주소가 정해진 뒤 추가해요.
+# 린트·테스트는 ci.yml이 따로 돌려요(배포를 막지 않아요). 머지 뒤에도 CI 결과를 확인해요.
+name: Deploy Test Server
+
+on:
+  push:
+    branches: [develop]
+  # 코드가 같아도 다시 올리고 싶을 때(서버 폴더를 손으로 건드린 뒤 등)
+  workflow_dispatch:
+
+# 올리는 도중에 다음 실행이 끼어들지 않게 차례로 돌려요. 도중에 취소하지 않아요(반쯤 올라간 채로 멈추지 않게).
+concurrency:
+  group: deploy-test
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # 서버 계정의 홈 폴더 기준. 서버 담당의 배포 안내와 같은 자리예요.
+  WEB_DIR: DVI-jiphajang-dev/web
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # API 주소는 넣지 않아요. 화면은 같은 주소의 /api 로 요청해요(서버가 화면과 API를 같은 주소로 내보내요).
+      - run: npm run build
+
+      - name: 빌드 결과 확인
+        run: |
+          test -f dist/index.html || { echo "::error::dist/index.html 이 없어요. 빌드 결과를 확인해 주세요."; exit 1; }
+          ls dist dist/assets
+
+      - name: 서버 접속 준비
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+        run: |
+          set -euo pipefail
+          for name in SSH_HOST SSH_PORT SSH_USER SSH_PRIVATE_KEY SITE_URL; do
+            [ -n "${!name}" ] || { echo "::error::시크릿 $name 이 없어요. 서버 담당에게 등록을 부탁해 주세요."; exit 1; }
+          done
+          install -m 700 -d ~/.ssh
+          # 열쇠 파일은 끝에 줄바꿈이 있어야 읽혀요
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # 서버의 호스트 키를 받아 둬요(서버 저장소의 배포와 같은 수준이에요)
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" > ~/.ssh/known_hosts 2>/dev/null
+          [ -s ~/.ssh/known_hosts ] || { echo "::error::서버에 닿지 않아요. 서버 담당에게 알려 주세요."; exit 1; }
+
+      - name: 서버에 올리고 바꿔치기
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          set -euo pipefail
+          remote() { ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" -o IdentitiesOnly=yes -o BatchMode=yes "$SSH_USER@$SSH_HOST" "$@"; }
+
+          # 서버 폴더가 없으면 서버 준비가 안 된 거예요. 여기서 만들지 않아요(엉뚱한 곳에 생기지 않게).
+          remote "test -d ~/$WEB_DIR" || { echo "::error::서버에 화면 폴더(~/$WEB_DIR)가 없어요. 서버 담당에게 알려 주세요."; exit 1; }
+
+          # web/ 폴더 자체는 지우지 않아요. 서버 컨테이너가 web/ 을 마운트하고 있어서, 지우고 새로 만들면 옛 폴더를 계속 봐요.
+          tar -C dist -czf - . | remote "rm -rf ~/$WEB_DIR/dist.new && mkdir ~/$WEB_DIR/dist.new && tar -xzf - -C ~/$WEB_DIR/dist.new"
+
+          remote "bash -s" <<EOF
+          set -euo pipefail
+          cd ~/$WEB_DIR
+          test -f dist.new/index.html
+          rm -rf dist.old
+          if [ -d dist ]; then mv dist dist.old; fi
+          mv dist.new dist
+          EOF
+
+      - name: 사이트가 새 빌드를 내보내는지 확인
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+        run: |
+          set -euo pipefail
+          # 방금 빌드한 index.html 이 가리키는 번들 이름(해시 포함)이 사이트에서도 보여야 새 화면이 올라간 거예요
+          bundle=$(grep -o '/assets/[^"]*\.js' dist/index.html | head -n 1)
+          served=$(curl -fsS --retry 3 --retry-delay 2 "${SITE_URL%/}/")
+          if ! printf '%s' "$served" | grep -qF -- "$bundle"; then
+            echo "::error::사이트가 방금 올린 빌드($bundle)를 내보내지 않아요. 서버 폴더를 확인해 주세요."
+            exit 1
+          fi
+          curl -fsS -o /dev/null "${SITE_URL%/}$bundle"
+          {
+            echo "### 테스트 서버에 올렸어요"
+            echo
+            echo "- 커밋: \`${GITHUB_SHA::7}\`"
+            echo "- 번들: \`$bundle\`"
+            echo "- 되돌리기: 서버의 화면 폴더에서 \`mv dist dist.bad && mv dist.old dist\`"
+          } >> "$GITHUB_STEP_SUMMARY"
