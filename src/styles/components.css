@@ -260,12 +260,18 @@
   font-weight: 600;
 }
 
+/*
+ * 첫 열은 옆으로 스크롤해도 남아요. 오른쪽에 선을 그어 고정된 곳을 보여줘요 —
+ * 선이 없으면 뒤로 반쯤 들어간 옆 열 글자가 첫 열 값에 붙어 보여요(“230 0”).
+ * 테두리는 `border-collapse: separate`에서 칸 너비를 바꿔서 안쪽 그림자로 그어요.
+ */
 .jh-table th:first-child,
 .jh-table td:first-child {
   position: sticky;
   left: 0;
   z-index: 1;
   background: inherit;
+  box-shadow: inset -1px 0 0 var(--line);
 }
 
 /* 첫 열은 바탕을 행에서 물려받는데, 머리줄 행은 바탕이 없어 비쳐 보여요. 직접 칠해요 */
