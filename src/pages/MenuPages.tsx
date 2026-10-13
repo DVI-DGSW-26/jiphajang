@@ -19,22 +19,6 @@ export function InvoicesPage() {
   );
 }
 
-export function LedgerPage() {
-  return (
-    <Page title="출하 원장">
-      <EmptyState
-        title="출하 원장이 비어 있어요"
-        description="Invoice를 올리면 한국 선적과 현지 출하가 여기에 쌓여요."
-        actions={
-          <Link className="jh-button" to="/invoices">
-            Invoice로 가기
-          </Link>
-        }
-      />
-    </Page>
-  );
-}
-
 export function StockPage() {
   return (
     <Page title="재고·선적">

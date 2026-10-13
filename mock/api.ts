@@ -12,10 +12,16 @@
  * - `MOCK_SCENARIO=no-group` — 로그인은 되는데 `/auth/me`가 401 (그룹에 없는 계정)
  * - `MOCK_SCENARIO=login-error` — 로그인에서 `#error=`로 돌아와요
  *
- * 목록은 예시 데이터로 답해요(`mock/exportDeclarations.ts`). 모양은 잠정이에요 — `src/lib/useList.ts`.
+ * 목록은 예시 데이터로 답해요(`mock/list.ts`). 받기·고치기 모양은 서버와 맞춘 약속이고, 열은 잠정이에요.
  */
 
-import { listExportDeclarations, patchExportDeclaration } from './exportDeclarations.ts';
+import { exportDeclarations } from './exportDeclarations.ts';
+import { ledger } from './ledger.ts';
+import type { MockList } from './list.ts';
+import { localInvoices } from './localInvoices.ts';
+
+/** 가짜 목록. 받기·고치기는 모두 같은 약속이에요 (`mock/list.ts`) */
+const MOCK_LISTS: MockList[] = [exportDeclarations, localInvoices, ledger];
 
 export type MockOptions = {
   role: 'REPORTER' | 'VIEWER';
@@ -86,16 +92,18 @@ export function handleMock(request: MockRequest, options: MockOptions): MockResp
     case 'POST /auth/logout':
       return { status: 204 };
 
-    case 'GET /results/export-declarations':
-      if (!bearer) return message(401, '로그인해 주세요.');
-      return { status: 200, json: listExportDeclarations(url.searchParams) };
-
     default: {
-      const patch = /^PATCH \/results\/export-declarations\/([^/]+)$/.exec(route);
-      if (patch?.[1]) {
+      const list = MOCK_LISTS.find((item) => item.path === url.pathname);
+      if (request.method.toUpperCase() === 'GET' && list) {
+        if (!bearer) return message(401, '로그인해 주세요.');
+        return { status: 200, json: list.list(url.searchParams) };
+      }
+      const patch = /^PATCH (.+)\/([^/]+)$/.exec(route);
+      const patchList = MOCK_LISTS.find((item) => item.path === patch?.[1]);
+      if (patch?.[2] && patchList) {
         if (!bearer) return message(401, '로그인해 주세요.');
         if (options.role !== 'REPORTER') return message(403, '보고자만 고칠 수 있어요.');
-        const result = patchExportDeclaration(decodeURIComponent(patch[1]), request.body);
+        const result = patchList.patch(decodeURIComponent(patch[2]), request.body);
         return 'row' in result
           ? { status: 200, json: result.row }
           : message(result.status, result.error);
