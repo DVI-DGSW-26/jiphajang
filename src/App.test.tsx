@@ -1,15 +1,30 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { App } from './App.tsx';
+import { ToastProvider } from './components/Toast.tsx';
 import type { AuthMe } from './lib/api.ts';
 
 const me: AuthMe = { name: '홍길동', role: 'REPORTER' };
 
+// 출하 원장 같은 목록 화면은 들어가자마자 목록을 받아요. 여기서는 빈 목록으로 답해요
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response(JSON.stringify({ items: [], total: 0 }), { status: 200 })),
+  );
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <App me={me} />
+      <ToastProvider>
+        <App me={me} />
+      </ToastProvider>
     </MemoryRouter>,
   );
 }

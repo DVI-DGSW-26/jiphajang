@@ -5,6 +5,7 @@ import { Page } from '../layout/Page.tsx';
 import type { AuthMe } from '../lib/api.ts';
 import { RESULTS } from '../menu.ts';
 import { ExportDeclarationsPage } from '../results/ExportDeclarationsPage.tsx';
+import { LocalInvoicesPage } from '../results/LocalInvoicesPage.tsx';
 import { NotFoundPage } from './MenuPages.tsx';
 
 /** 결과 목록 — 결과는 입력 화면이 아니라 출하 원장을 조회·집계한 화면이에요 */
@@ -41,6 +42,9 @@ export function ResultPage({ me }: { me: AuthMe }) {
   if (!result) return <NotFoundPage />;
   if (result.slug === 'export-declarations') {
     return <ExportDeclarationsPage me={me} eyebrow={backToResults} />;
+  }
+  if (result.slug === 'local-invoice-list') {
+    return <LocalInvoicesPage me={me} eyebrow={backToResults} />;
   }
 
   return (
