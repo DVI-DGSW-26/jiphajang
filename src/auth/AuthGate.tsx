@@ -9,6 +9,7 @@ import {
 } from '../lib/auth.ts';
 import { useSessionExpired } from '../lib/session.ts';
 import { AuthScreen } from './AuthScreen.tsx';
+import { ConnectionBanner } from './ConnectionBanner.tsx';
 import { SessionExpiredDialog } from './SessionExpiredDialog.tsx';
 
 type MeState =
@@ -130,6 +131,7 @@ export function AuthGate({ children }: { children: (me: AuthMe) => ReactNode }) 
   return (
     <>
       {children(state.me)}
+      <ConnectionBanner />
       <SessionExpiredDialog me={state.me} />
     </>
   );

@@ -260,12 +260,18 @@
   font-weight: 600;
 }
 
+/*
+ * 첫 열은 옆으로 스크롤해도 남아요. 오른쪽에 선을 그어 고정된 곳을 보여줘요 —
+ * 선이 없으면 뒤로 반쯤 들어간 옆 열 글자가 첫 열 값에 붙어 보여요(“230 0”).
+ * 테두리는 `border-collapse: separate`에서 칸 너비를 바꿔서 안쪽 그림자로 그어요.
+ */
 .jh-table th:first-child,
 .jh-table td:first-child {
   position: sticky;
   left: 0;
   z-index: 1;
   background: inherit;
+  box-shadow: inset -1px 0 0 var(--line);
 }
 
 /* 첫 열은 바탕을 행에서 물려받는데, 머리줄 행은 바탕이 없어 비쳐 보여요. 직접 칠해요 */
@@ -828,4 +834,31 @@
   padding: 0;
   border: 0;
   background: var(--paper);
+}
+
+/* ── 연결 끊김 ────────────────────────────────────────
+ * 화면을 막지 않고 아래에 떠요. 알림(토스트)보다 위에 둬요 */
+.jh-connection {
+  position: fixed;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  left: var(--space-3);
+  z-index: 45;
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 10px 12px 10px var(--space-3);
+  color: var(--text-primary);
+  background: var(--paper);
+  border: 1px solid var(--grey-400);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 16px rgb(42 39 36 / 18%);
+}
+
+.jh-connection__text {
+  margin: 0;
 }
