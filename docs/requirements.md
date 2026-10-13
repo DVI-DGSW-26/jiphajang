@@ -25,7 +25,7 @@
   - 열마다 필터(엑셀 자동 필터처럼 값 골라 거르기, 같은 메뉴에 정렬)
   - 칸 범위 고르기(끌기·Shift+방향키·Ctrl+A)와 복사(Ctrl+C → 엑셀에 붙여넣기). 고른 숫자 칸의 합계를 위에 보여줘요
   - 표 안에서 바로 고치기 — **직접 입력 칸만, 보고자만.** 자동 칸(판독·계산·마스터)은 막아 둬요(고칠지 미정)
-  - 첫 화면은 수출신고취합(`src/results/ExportDeclarationsPage.tsx`), 표는 `src/components/grid/`. 다른 목록도 이 틀을 써요
+  - 목록 화면의 틀은 `src/lists/ListScreen.tsx`, 표는 `src/components/grid/`. 화면마다 열과 문구만 달라요. 지금 수출신고취합·현지 출하 Invoice List·출하 원장이 이 틀을 써요(열은 잠정, 가짜 서버로 봐요)
 
 ## 매뉴얼의 예시 값
 

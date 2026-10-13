@@ -3,11 +3,12 @@ import type { Period } from '../components/PeriodFilter.tsx';
 import { apiFetch } from './api.ts';
 
 /**
- * 목록 한 쪽 — 서버와 맞춘 공통 약속(기간 필터 + 페이지 나누기).
+ * 목록 받기·칸 고치기 — 서버와 맞춘 공통 약속(2026-10-13, `docs/requirements.md`).
+ * 열과 상관없이 모든 목록이 같은 모양이에요.
  *
- * **잠정이에요.** 서버에 목록 API가 아직 없어서 모양은 가짜 서버(`mock/api.ts`)와만 맞췄어요.
- * `GET <경로>?from=YYYY-MM-DD&to=YYYY-MM-DD&page=0&size=500` → `{ items, total }`.
- * 서버가 다른 모양으로 만들면 이 파일만 고쳐요.
+ * - 받기: `GET <경로>?from=YYYY-MM-DD&to=YYYY-MM-DD&page=0&size=500` → `{ items, total }`.
+ *   `page`는 0부터, 서버의 `size` 상한은 1000이에요.
+ * - 고치기: `PATCH <경로>/<id>`에 고친 칸만 `{ 칸: 값 }`(지우면 `null`) → 계산 칸까지 다시 구한 행 전체.
  */
 export type ListPage<T> = { items: T[]; total: number };
 
@@ -69,4 +70,17 @@ export function useList<T>(path: string, period: Period) {
   }, []);
 
   return { rows, total, state, reload, replaceRow };
+}
+
+/** 고친 칸만 보내고, 서버가 계산 칸까지 다시 구한 행을 받아요 */
+export function patchListRow<T>(
+  path: string,
+  id: string,
+  changes: Record<string, string | null>,
+): Promise<T> {
+  return apiFetch<T>(`${path}/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(changes),
+  });
 }

@@ -1,14 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router';
 import { TopBar } from './layout/TopBar.tsx';
+import { LedgerPage } from './ledger/LedgerPage.tsx';
 import type { AuthMe } from './lib/api.ts';
 import { HOME_PATH } from './menu.ts';
-import {
-  InvoicesPage,
-  LedgerPage,
-  MasterPage,
-  NotFoundPage,
-  StockPage,
-} from './pages/MenuPages.tsx';
+import { InvoicesPage, MasterPage, NotFoundPage, StockPage } from './pages/MenuPages.tsx';
 import { ResultPage, ResultsPage } from './pages/ResultPages.tsx';
 
 /** 로그인한 뒤의 앱. 상단 바 아래에 메뉴별 화면을 그려요 */
@@ -22,7 +17,7 @@ export function App({ me }: { me: AuthMe }) {
       <Routes>
         <Route index element={<Navigate to={HOME_PATH} replace />} />
         <Route path="invoices" element={<InvoicesPage />} />
-        <Route path="ledger" element={<LedgerPage />} />
+        <Route path="ledger" element={<LedgerPage me={me} />} />
         <Route path="results" element={<ResultsPage />} />
         <Route path="results/:slug" element={<ResultPage me={me} />} />
         <Route path="stock" element={<StockPage />} />

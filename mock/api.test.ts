@@ -117,3 +117,64 @@ test('직접 입력 칸을 고치면 계산 칸까지 새로 구한 행을 돌�
     ).status,
   ).toBe(403);
 });
+
+test('현지 출하 Invoice List도 같은 약속으로 받고 고쳐요', () => {
+  const list = handleMock(
+    {
+      method: 'GET',
+      url: '/results/local-invoice-list?from=2025-03-01&to=2025-03-31',
+      authorization: bearer,
+    },
+    ok,
+  ).json as { items: { id: string; invoiceDate: string }[]; total: number };
+  const row = list.items[0];
+  if (!row) throw new Error('가짜 행이 없어요');
+  expect(list.items.every((item) => item.invoiceDate.startsWith('2025-03'))).toBe(true);
+
+  const url = `/results/local-invoice-list/${encodeURIComponent(row.id)}`;
+  const saved = handleMock(
+    { method: 'PATCH', url, authorization: bearer, body: { trackingNo: null } },
+    ok,
+  );
+  expect(saved).toMatchObject({ status: 200, json: { id: row.id, trackingNo: null } });
+  expect(
+    handleMock({ method: 'PATCH', url, authorization: bearer, body: { unitPrice: '1' } }, ok)
+      .status,
+  ).toBe(400);
+});
+
+test('출하 원장은 한국 출하와 현지 출하를 날짜순으로 합쳐 줘요. 고칠 칸은 없어요', () => {
+  const body = handleMock(
+    { method: 'GET', url: '/ledger?from=2025-04-01&to=2025-04-30', authorization: bearer },
+    ok,
+  ).json as { items: { id: string; kind: string; date: string }[] };
+  expect(new Set(body.items.map((row) => row.kind))).toEqual(new Set(['한국 출하', '현지 출하']));
+  const dates = body.items.map((row) => row.date);
+  expect(dates).toEqual([...dates].sort());
+
+  const first = body.items[0];
+  if (!first) throw new Error('가짜 행이 없어요');
+  expect(
+    handleMock(
+      {
+        method: 'PATCH',
+        url: `/ledger/${encodeURIComponent(first.id)}`,
+        authorization: bearer,
+        body: { customer: 'X' },
+      },
+      ok,
+    ).status,
+  ).toBe(400);
+});
+
+test('가짜 수량·금액은 음수가 없어요', () => {
+  const body = handleMock(
+    {
+      method: 'GET',
+      url: '/ledger?from=2025-01-01&to=2026-12-31&size=1000',
+      authorization: bearer,
+    },
+    ok,
+  ).json as { items: { totalQty: number; amount: string }[] };
+  expect(body.items.every((row) => row.totalQty > 0 && !row.amount.startsWith('-'))).toBe(true);
+});
