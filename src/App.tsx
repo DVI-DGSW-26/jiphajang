@@ -24,7 +24,7 @@ export function App({ me }: { me: AuthMe }) {
         <Route path="invoices" element={<InvoicesPage />} />
         <Route path="ledger" element={<LedgerPage />} />
         <Route path="results" element={<ResultsPage />} />
-        <Route path="results/:slug" element={<ResultPage />} />
+        <Route path="results/:slug" element={<ResultPage me={me} />} />
         <Route path="stock" element={<StockPage />} />
         <Route path="master" element={<MasterPage />} />
         <Route path="*" element={<NotFoundPage />} />
