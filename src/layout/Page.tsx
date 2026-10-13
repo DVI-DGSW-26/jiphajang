@@ -8,14 +8,16 @@ type Props = {
   eyebrow?: ReactNode;
   /** 제목 오른쪽의 행동. 주 버튼은 하나만 */
   actions?: ReactNode;
+  /** 넓은 표가 있는 목록 화면은 엑셀처럼 화면 폭을 다 써요 */
+  wide?: boolean;
   children: ReactNode;
 };
 
 /** 화면 하나의 틀. 제목과 탭 제목을 같이 맞춰요 */
-export function Page({ title, eyebrow, actions, children }: Props) {
+export function Page({ title, eyebrow, actions, wide = false, children }: Props) {
   usePageTitle(title);
   return (
-    <main className="jh-main" id="main">
+    <main className={wide ? 'jh-main jh-main--wide' : 'jh-main'} id="main">
       <div className="jh-page-head">
         <div>
           {eyebrow && <div className="jh-page-head__eyebrow">{eyebrow}</div>}

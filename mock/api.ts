@@ -11,7 +11,11 @@
  * - `MOCK_ROLE=VIEWER` — 열람자로 들어가요
  * - `MOCK_SCENARIO=no-group` — 로그인은 되는데 `/auth/me`가 401 (그룹에 없는 계정)
  * - `MOCK_SCENARIO=login-error` — 로그인에서 `#error=`로 돌아와요
+ *
+ * 목록은 예시 데이터로 답해요(`mock/exportDeclarations.ts`). 모양은 잠정이에요 — `src/lib/useList.ts`.
  */
+
+import { listExportDeclarations, patchExportDeclaration } from './exportDeclarations.ts';
 
 export type MockOptions = {
   role: 'REPORTER' | 'VIEWER';
@@ -24,6 +28,8 @@ export type MockRequest = {
   /** `/api` 뒤의 경로와 쿼리 — `/auth/me`, `/auth/login?redirect=…` */
   url: string;
   authorization?: string | undefined;
+  /** JSON 본문 (PATCH 등) */
+  body?: unknown;
 };
 
 export type MockResponse = {
@@ -80,7 +86,21 @@ export function handleMock(request: MockRequest, options: MockOptions): MockResp
     case 'POST /auth/logout':
       return { status: 204 };
 
-    default:
+    case 'GET /results/export-declarations':
+      if (!bearer) return message(401, '로그인해 주세요.');
+      return { status: 200, json: listExportDeclarations(url.searchParams) };
+
+    default: {
+      const patch = /^PATCH \/results\/export-declarations\/([^/]+)$/.exec(route);
+      if (patch?.[1]) {
+        if (!bearer) return message(401, '로그인해 주세요.');
+        if (options.role !== 'REPORTER') return message(403, '보고자만 고칠 수 있어요.');
+        const result = patchExportDeclaration(decodeURIComponent(patch[1]), request.body);
+        return 'row' in result
+          ? { status: 200, json: result.row }
+          : message(result.status, result.error);
+      }
       return message(404, `가짜 서버에 아직 없는 API예요: ${route}`);
+    }
   }
 }

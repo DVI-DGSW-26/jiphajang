@@ -310,3 +310,25 @@ a.jh-button {
   font: var(--type-small);
   text-align: center;
 }
+
+/* 가짜 서버 띠가 있으면 로그인 화면이 그만큼 길어져 스크롤이 생겨요. 띠 높이(31px)를 빼요 */
+.jh-mock-banner ~ .jh-auth {
+  min-height: calc(100dvh - 31px);
+}
+
+/* 목록 화면: 화면 폭을 다 써요. 상단 바도 같이 넓혀 왼쪽 끝을 맞춰요 */
+.jh-main--wide {
+  max-width: none;
+}
+
+body:has(.jh-main--wide) .jh-topbar__inner {
+  max-width: none;
+}
+
+/* 휴대폰 폭에서는 다른 화면과 같은 좌우 여백 */
+@media (min-width: 641px) {
+  .jh-main--wide,
+  body:has(.jh-main--wide) .jh-topbar__inner {
+    padding-inline: var(--space-4);
+  }
+}

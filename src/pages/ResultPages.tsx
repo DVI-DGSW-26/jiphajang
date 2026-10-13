@@ -2,7 +2,9 @@ import { Link, useParams } from 'react-router';
 import { Badge } from '../components/Badge.tsx';
 import { EmptyState } from '../components/EmptyState.tsx';
 import { Page } from '../layout/Page.tsx';
+import type { AuthMe } from '../lib/api.ts';
 import { RESULTS } from '../menu.ts';
+import { ExportDeclarationsPage } from '../results/ExportDeclarationsPage.tsx';
 import { NotFoundPage } from './MenuPages.tsx';
 
 /** 결과 목록 — 결과는 입력 화면이 아니라 출하 원장을 조회·집계한 화면이에요 */
@@ -27,20 +29,22 @@ export function ResultsPage() {
   );
 }
 
-export function ResultPage() {
+const backToResults = (
+  <Link className="jh-back-link" to="/results">
+    결과 목록
+  </Link>
+);
+
+export function ResultPage({ me }: { me: AuthMe }) {
   const { slug } = useParams();
   const result = RESULTS.find((item) => item.slug === slug);
   if (!result) return <NotFoundPage />;
+  if (result.slug === 'export-declarations') {
+    return <ExportDeclarationsPage me={me} eyebrow={backToResults} />;
+  }
 
   return (
-    <Page
-      title={result.title}
-      eyebrow={
-        <Link className="jh-back-link" to="/results">
-          결과 목록
-        </Link>
-      }
-    >
+    <Page title={result.title} eyebrow={backToResults}>
       {result.waitingForSource ? (
         <EmptyState
           title="계산 기준을 받고 있어요"

@@ -53,3 +53,67 @@ test('환경 변수로 상황을 골라요. 모르는 값은 기본값이에요'
   });
   expect(readMockOptions({ MOCK_SCENARIO: 'weird' }).scenario).toBe('ok');
 });
+
+const bearer = `Bearer ${MOCK_TOKEN_PREFIX}.1`;
+
+test('수출신고취합은 기간 안의 행을 쪽으로 나눠 줘요', () => {
+  const all = handleMock(
+    {
+      method: 'GET',
+      url: '/results/export-declarations?from=2025-01-01&to=2025-03-31',
+      authorization: bearer,
+    },
+    ok,
+  );
+  const body = all.json as { items: { shipDate: string }[]; total: number };
+  expect(body.total).toBeGreaterThan(10);
+  expect(
+    body.items.every((row) => row.shipDate >= '2025-01-01' && row.shipDate <= '2025-03-31'),
+  ).toBe(true);
+
+  const page = handleMock(
+    {
+      method: 'GET',
+      url: '/results/export-declarations?from=2025-01-01&to=2025-03-31&page=1&size=5',
+      authorization: bearer,
+    },
+    ok,
+  ).json as { items: unknown[]; total: number };
+  expect(page.items).toEqual(body.items.slice(5, 10));
+  expect(page.total).toBe(body.total);
+});
+
+test('직접 입력 칸을 고치면 계산 칸까지 새로 구한 행을 돌려줘요. 열람자는 403', () => {
+  const list = handleMock(
+    {
+      method: 'GET',
+      url: '/results/export-declarations?from=2025-02-01&to=2025-02-28',
+      authorization: bearer,
+    },
+    ok,
+  ).json as { items: { id: string; amountUsd: string }[] };
+  const row = list.items[0];
+  if (!row) throw new Error('가짜 행이 없어요');
+  const url = `/results/export-declarations/${encodeURIComponent(row.id)}`;
+
+  const saved = handleMock(
+    { method: 'PATCH', url, authorization: bearer, body: { exchangeRate: '2' } },
+    ok,
+  );
+  expect(saved.status).toBe(200);
+  expect(saved.json).toMatchObject({
+    exchangeRate: '2',
+    amountKrw: String(Math.round(Number(row.amountUsd) * 2)),
+  });
+
+  expect(
+    handleMock({ method: 'PATCH', url, authorization: bearer, body: { amountUsd: '1' } }, ok)
+      .status,
+  ).toBe(400);
+  expect(
+    handleMock(
+      { method: 'PATCH', url, authorization: bearer, body: { blNo: 'X' } },
+      { ...ok, role: 'VIEWER' },
+    ).status,
+  ).toBe(403);
+});
