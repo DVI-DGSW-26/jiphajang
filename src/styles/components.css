@@ -808,3 +808,10 @@
     min-height: 44px;
   }
 }
+
+/* 그리지 않은 행 자리 (보이는 행만 그려요). 높이는 칸에 직접 줘요 */
+.jh-grid__table tbody tr.jh-grid__spacer td {
+  padding: 0;
+  border: 0;
+  background: var(--paper);
+}
