@@ -160,3 +160,52 @@ test('행이 많으면 보이는 행만 그리고, 합계·선택·복사는 전
   fireEvent.keyDown(grid, { key: 'a', ctrlKey: true });
   expect(screen.getByText(/15,000칸 선택/)).toBeInTheDocument();
 });
+
+test('열 보기에서 열을 숨기면 그 열로 거른 것도 풀리고, 다시 열어도 기억해요', () => {
+  localStorage.clear();
+  const { unmount } = render(
+    <Grid caption="기억 표" columns={columns} rows={rows} rowKey={(row) => row.id} viewId="/t" />,
+  );
+  // 고객사 B를 거른 뒤 고객사 열을 숨겨요
+  fireEvent.click(screen.getByRole('button', { name: '고객사 필터와 정렬' }));
+  const filter = screen.getByRole('dialog', { name: '고객사 필터' });
+  fireEvent.click(within(filter).getByRole('checkbox', { name: '고객사 B' }));
+  fireEvent.click(within(filter).getByRole('button', { name: '확인' }));
+  fireEvent.click(screen.getByRole('button', { name: '열 보기' }));
+  const menu = screen.getByRole('dialog', { name: '열 보기' });
+  fireEvent.click(within(menu).getByRole('checkbox', { name: '고객사' }));
+
+  expect(screen.queryByRole('columnheader', { name: /고객사/ })).not.toBeInTheDocument();
+  expect(screen.getByText('3행')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '열 보기 (1개 숨김)' })).toBeInTheDocument();
+
+  unmount();
+  render(
+    <Grid caption="기억 표" columns={columns} rows={rows} rowKey={(row) => row.id} viewId="/t" />,
+  );
+  expect(screen.queryByRole('columnheader', { name: /고객사/ })).not.toBeInTheDocument();
+
+  // 처음 보기로 돌리면 다시 보여요
+  fireEvent.click(screen.getByRole('button', { name: '열 보기 (1개 숨김)' }));
+  fireEvent.click(screen.getByRole('button', { name: '처음 보기로' }));
+  expect(screen.getByRole('columnheader', { name: /고객사/ })).toBeInTheDocument();
+  expect(localStorage.length).toBe(0);
+});
+
+test('정렬도 다시 열면 그대로예요', () => {
+  localStorage.clear();
+  const { unmount } = render(
+    <Grid caption="정렬 표" columns={columns} rows={rows} rowKey={(row) => row.id} viewId="/s" />,
+  );
+  fireEvent.click(screen.getByRole('button', { name: '환율 필터와 정렬' }));
+  fireEvent.click(screen.getByRole('button', { name: '내림차순 정렬' }));
+  unmount();
+  render(
+    <Grid caption="정렬 표" columns={columns} rows={rows} rowKey={(row) => row.id} viewId="/s" />,
+  );
+  expect(screen.getByRole('columnheader', { name: /환율/ })).toHaveAttribute(
+    'aria-sort',
+    'descending',
+  );
+  expect(cell(0, 2)).toHaveTextContent('1390.00');
+});
