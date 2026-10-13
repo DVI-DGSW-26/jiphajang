@@ -1,4 +1,5 @@
 import { apiBase, clearToken, getToken, markAuthenticated, setToken } from './auth.ts';
+import { connectionSettled, isOffline, waitForConnection } from './connection.ts';
 import { isSessionExpired, waitForLogin } from './session.ts';
 
 /** 서버가 2xx가 아닌 답을 줬어요. 401은 화면이 로그인으로 안내해요 */
@@ -52,6 +53,47 @@ function send(path: string, init: RequestInit): Promise<Response> {
 /** `/auth/me`가 한 번 통했는가. 그 뒤의 401만 만료로 봐요 */
 let signedIn = false;
 
+/** 다시 보내도 결과가 같은 요청만 연결을 기다려요. POST는 두 번 들어갈 수 있어 기다리지 않아요 */
+const RETRY_METHODS = new Set(['GET', 'HEAD', 'PUT', 'PATCH', 'DELETE']);
+/** 서버가 다시 켜지는 중이거나 앞단 프록시가 서버에 닿지 못했어요 */
+const RETRY_STATUS = new Set([502, 503, 504]);
+
+/**
+ * 연결이 끊겼으면 다시 연결될 때까지 기다렸다가 보내요 (`lib/connection.ts`).
+ * 들어오기 전과 `/auth/*`는 기다리지 않아요 — 로그인 화면이 오류를 보여줘요.
+ */
+async function sendWhenConnected(path: string, init: RequestInit): Promise<Response> {
+  const method = (init.method ?? 'GET').toUpperCase();
+  if (!signedIn || path.startsWith('/auth/') || !RETRY_METHODS.has(method)) {
+    return send(path, init);
+  }
+
+  // 줄에서 나와 보내는 중이면 결과가 무엇이든 다음 요청을 내보내야 해요
+  let queued = false;
+  if (isOffline()) {
+    await waitForConnection(init.signal);
+    queued = true;
+  }
+  for (;;) {
+    let response: Response | null = null;
+    try {
+      response = await send(path, init);
+    } catch (error) {
+      // fetch는 연결 실패를 TypeError로 알려요. 끊은 요청(AbortError)은 기다리지 않아요
+      if (init.signal?.aborted || !(error instanceof TypeError)) {
+        if (queued) connectionSettled();
+        throw error;
+      }
+    }
+    if (response && !RETRY_STATUS.has(response.status)) {
+      if (queued) connectionSettled();
+      return response;
+    }
+    await waitForConnection(init.signal, queued);
+    queued = true;
+  }
+}
+
 /** 여러 요청이 한꺼번에 401을 받아도 갱신은 한 번만 불러요 */
 let refreshing: Promise<boolean> | null = null;
 
@@ -76,15 +118,19 @@ function refreshAfter401(): Promise<boolean> {
  * **들어온 뒤의 401은 만료예요.** 갱신을 한 번 해 보고, 안 되면 다시 로그인할 때까지
  * 기다렸다가 같은 요청을 다시 보내요 (`lib/session.ts`). 부른 쪽은 실패를 보지 않아요.
  * `/auth/*`는 기다리지 않아요 — 로그인 확인 자체라 기다리면 풀리지 않아요.
+ *
+ * **연결이 끊겨도** 실패시키지 않고 다시 연결될 때까지 기다려요 (`sendWhenConnected`).
  */
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  let response = await send(path, init);
+  let response = await sendWhenConnected(path, init);
 
   if (response.status === 401 && signedIn && !path.startsWith('/auth/')) {
-    if (!isSessionExpired() && (await refreshAfter401())) response = await send(path, init);
+    if (!isSessionExpired() && (await refreshAfter401())) {
+      response = await sendWhenConnected(path, init);
+    }
     while (response.status === 401) {
       await waitForLogin(init.signal);
-      response = await send(path, init);
+      response = await sendWhenConnected(path, init);
     }
   }
 
