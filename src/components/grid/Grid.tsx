@@ -33,6 +33,7 @@ import {
   sortRows,
   toRange,
 } from './gridModel.ts';
+import { useRowWindow } from './useRowWindow.ts';
 
 type Props<Row> = {
   columns: GridColumn<Row>[];
@@ -88,6 +89,8 @@ export function Grid<Row>({
   const gridId = useId();
   const tableRef = useRef<HTMLTableElement>(null);
   const draggingRef = useRef(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLTableSectionElement>(null);
 
   const [filters, setFilters] = useState<Filters>({});
   const [sort, setSort] = useState<Sort>(null);
@@ -118,11 +121,28 @@ export function Grid<Row>({
 
   const cellId = (pos: CellPos) => `${gridId}-${pos.row}-${pos.col}`;
 
-  // 고른 칸이 화면 밖이면 보이게 스크롤해요
+  const { visible, rowHeight, scrollToRow } = useRowWindow(wrapRef, bodyRef, view.length);
+  const focusRendered = safeFocus.row >= visible.start && safeFocus.row < visible.end;
+
+  // 고른 칸이 화면 밖이면 보이게 스크롤해요. 행은 그려져 있지 않을 수 있어 위아래는 계산으로,
+  // 좌우는 그려진 뒤 칸으로 맞춰요
   useEffect(() => {
-    const cell = document.getElementById(`${gridId}-${focus.row}-${focus.col}`);
-    cell?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
-  }, [gridId, focus]);
+    scrollToRow(focus.row);
+    const frame = requestAnimationFrame(() => {
+      const cell = document.getElementById(`${gridId}-${focus.row}-${focus.col}`);
+      cell?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [gridId, focus, scrollToRow]);
+
+  // 고치던 칸이 스크롤로 사라지면 그 자리에서 저장해요(엑셀에서 다른 곳을 누른 것처럼)
+  const editingOut =
+    editing !== null && (editing.row < visible.start || editing.row >= visible.end);
+  useEffect(() => {
+    // 읽을 수 없는 값이면 저장하지 않고 그 칸으로 돌아가 이유를 보여줘요
+    const current = editingRef.current;
+    if (editingOut && current && !commitRef.current(null)) scrollToRow(current.row);
+  }, [editingOut, scrollToRow]);
 
   useEffect(() => {
     const stop = () => {
@@ -197,6 +217,9 @@ export function Grid<Row>({
     }
     return true;
   };
+
+  const commitRef = useRef(commit);
+  commitRef.current = commit;
 
   const cancelEdit = () => {
     editingRef.current = null;
@@ -315,6 +338,17 @@ export function Grid<Row>({
   const hasFilter = Object.keys(filters).length > 0;
   const hasTotal = columns.some((column) => column.total);
 
+  // 합계와 고른 칸 합계는 행이 많으면 오래 걸려요. 바뀔 때만 다시 구해요
+  const totals = useMemo(
+    () => columns.map((column) => (column.total ? column.total(view) : null)),
+    [columns, view],
+  );
+  const { top, bottom, left, right } = range;
+  const selection = useMemo(
+    () => selectionSummary(view, columns, { top, bottom, left, right }),
+    [view, columns, top, bottom, left, right],
+  );
+
   const onDownload = () => {
     if (!download) return;
     const filtered = hasFilter
@@ -339,7 +373,7 @@ export function Grid<Row>({
         shown={view.length}
         hasFilter={hasFilter}
         onClearFilters={() => setFilters({})}
-        selection={selectionSummary(view, columns, range)}
+        selection={selection}
         toolbar={
           toolbar || download ? (
             <>
@@ -353,7 +387,7 @@ export function Grid<Row>({
           ) : null
         }
       />
-      <div className="jh-grid__wrap">
+      <div className="jh-grid__wrap" ref={wrapRef}>
         {/* role="grid"이면 칸(td)은 저절로 gridcell이에요. 키보드는 표가 받고 고른 칸은 activedescendant로 알려요 */}
         <table
           ref={tableRef}
@@ -363,7 +397,9 @@ export function Grid<Row>({
           aria-label={caption}
           aria-multiselectable="true"
           aria-rowcount={view.length + 1}
-          aria-activedescendant={view.length > 0 && !editing ? cellId(safeFocus) : undefined}
+          aria-activedescendant={
+            view.length > 0 && !editing && focusRendered ? cellId(safeFocus) : undefined
+          }
           tabIndex={0}
           onKeyDown={onKeyDown}
           onCopy={onCopy}
@@ -416,7 +452,12 @@ export function Grid<Row>({
               })}
             </tr>
           </thead>
-          <tbody onMouseDown={onMouseDown} onMouseMove={onMouseMove} onDoubleClick={onDoubleClick}>
+          <tbody
+            ref={bodyRef}
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onDoubleClick={onDoubleClick}
+          >
             {view.length === 0 ? (
               <tr>
                 <td className="jh-grid__no-match" colSpan={columns.length}>
@@ -427,27 +468,39 @@ export function Grid<Row>({
                 </td>
               </tr>
             ) : (
-              view.map((row, index) => (
-                <GridRow
-                  key={rowKey(row)}
-                  gridId={gridId}
-                  row={row}
-                  rowIndex={index}
-                  rowKeyValue={rowKey(row)}
-                  columns={columns}
-                  selected={index >= range.top && index <= range.bottom ? range : null}
-                  focusCol={index === safeFocus.row ? safeFocus.col : null}
-                  editing={editing?.row === index ? editing : null}
-                  saving={saving}
-                  needsCheck={rowNeedsCheck?.(row) ?? false}
-                  isEditable={isEditable}
-                  onEditText={(text) => setEditing((current) => current && { ...current, text })}
-                  onCommit={commit}
-                  onCancel={cancelEdit}
-                  lastRow={view.length - 1}
-                  lastCol={columns.length - 1}
-                />
-              ))
+              <>
+                {/* 보이는 행 위아래는 빈 줄로 자리만 잡아요 (`useRowWindow`) */}
+                {visible.start > 0 && <Spacer height={visible.start * rowHeight} />}
+                {view.slice(visible.start, visible.end).map((row, offset) => {
+                  const index = visible.start + offset;
+                  return (
+                    <GridRow
+                      key={rowKey(row)}
+                      gridId={gridId}
+                      row={row}
+                      rowIndex={index}
+                      rowKeyValue={rowKey(row)}
+                      columns={columns}
+                      selected={index >= range.top && index <= range.bottom ? range : null}
+                      focusCol={index === safeFocus.row ? safeFocus.col : null}
+                      editing={editing?.row === index ? editing : null}
+                      saving={saving}
+                      needsCheck={rowNeedsCheck?.(row) ?? false}
+                      isEditable={isEditable}
+                      onEditText={(text) =>
+                        setEditing((current) => current && { ...current, text })
+                      }
+                      onCommit={commit}
+                      onCancel={cancelEdit}
+                      lastRow={view.length - 1}
+                      lastCol={columns.length - 1}
+                    />
+                  );
+                })}
+                {visible.end < view.length && (
+                  <Spacer height={(view.length - visible.end) * rowHeight} />
+                )}
+              </>
             )}
           </tbody>
           {hasTotal && view.length > 0 && (
@@ -455,7 +508,7 @@ export function Grid<Row>({
               <tr>
                 {columns.map((column, index) => (
                   <td key={column.key} className={column.numeric ? 'jh-table__num' : undefined}>
-                    {column.total ? column.total(view) : index === 0 ? totalLabel : null}
+                    {totals[index] ?? (index === 0 ? totalLabel : null)}
                   </td>
                 ))}
               </tr>
@@ -530,7 +583,7 @@ function GridRowInner<Row>({
   lastCol,
 }: RowProps<Row>) {
   return (
-    <tr className={needsCheck ? 'jh-table__row--bad' : undefined}>
+    <tr className={needsCheck ? 'jh-table__row--bad' : undefined} aria-rowindex={rowIndex + 2}>
       {columns.map((column, colIndex) => {
         const inRange = !!selected && colIndex >= selected.left && colIndex <= selected.right;
         const isFocus = focusCol === colIndex;
@@ -777,4 +830,14 @@ function FilterIcon({ filtered, sorted }: { filtered: boolean; sorted: 'asc' | '
 function printedAt(now = new Date()): string {
   const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   return `${formatDate(now)} ${time}`;
+}
+
+/** 그리지 않은 행 자리 */
+function Spacer({ height }: { height: number }) {
+  return (
+    // biome-ignore lint/a11y/noAriaHiddenOnFocusable: 빈 자리 줄은 초점을 받지 않아요(tabIndex 없음)
+    <tr aria-hidden="true" className="jh-grid__spacer">
+      <td style={{ height }} />
+    </tr>
+  );
 }

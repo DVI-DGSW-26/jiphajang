@@ -4,7 +4,7 @@ import {
   type LocalInvoiceRow,
 } from '../src/results/localInvoices.ts';
 import { mockList } from './list.ts';
-import { eachDay, hash, iso, isRecent, multiply } from './sample.ts';
+import { eachShipment, isRecent, multiply } from './sample.ts';
 
 /**
  * 가짜 현지 출하 Invoice List — 화면을 만들 때 볼 예시예요. **실제 고객사·품번·금액이 아니에요.**
@@ -24,12 +24,11 @@ const PARTS = [
 function generate(): LocalInvoiceRow[] {
   const rows: LocalInvoiceRow[] = [];
   let no = 0;
-  for (const day of eachDay()) {
-    const date = iso(day);
-    const seed = hash(`L${date}`);
-    if (seed % 2 !== 0 || day.getUTCDay() === 0 || day.getUTCDay() === 6) continue;
+  const isShipDay = (day: Date, seed: number) =>
+    seed % 2 === 0 && day.getUTCDay() !== 0 && day.getUTCDay() !== 6;
+  for (const { date, seed, round } of eachShipment('L', isShipDay)) {
     no++;
-    const invoiceNo = `MT${date.slice(2).replaceAll('-', '')}A`;
+    const invoiceNo = `MT${date.slice(2).replaceAll('-', '')}${round}`;
     const lines = 1 + ((seed >>> 4) % 2);
     for (let line = 0; line < lines; line++) {
       const part = PARTS[((seed >>> 1) + line) % PARTS.length] ?? PARTS[0];

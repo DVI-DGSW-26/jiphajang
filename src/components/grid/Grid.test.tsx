@@ -136,3 +136,27 @@ test('열람자는 고르고 복사만 해요', () => {
   expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   expect(onEdit).not.toHaveBeenCalled();
 });
+
+test('행이 많으면 보이는 행만 그리고, 합계·선택·복사는 전체 행으로 해요', () => {
+  const many: Row[] = Array.from({ length: 5000 }, (_, i) => ({
+    id: String(i),
+    customer: `고객사 ${i % 3}`,
+    blNo: null,
+    rate: '1',
+  }));
+  const { grid } = renderGrid({
+    rows: many,
+    columns: columns.map((column) =>
+      column.key === 'rate' ? { ...column, total: (r: Row[]) => String(r.length) } : column,
+    ),
+  });
+
+  const drawn = grid.querySelectorAll('tbody tr[aria-rowindex]').length;
+  expect(drawn).toBeGreaterThan(0);
+  expect(drawn).toBeLessThan(100);
+  expect(grid).toHaveAttribute('aria-rowcount', '5001');
+  expect(screen.getByText('5000')).toBeInTheDocument(); // 합계는 전체 행
+
+  fireEvent.keyDown(grid, { key: 'a', ctrlKey: true });
+  expect(screen.getByText(/15,000칸 선택/)).toBeInTheDocument();
+});
