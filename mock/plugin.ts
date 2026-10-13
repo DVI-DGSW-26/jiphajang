@@ -1,6 +1,7 @@
 import type { IncomingMessage } from 'node:http';
 import type { Plugin } from 'vite';
 import { handleMock, type MockOptions } from './api.ts';
+import { setMockScale } from './sample.ts';
 
 /** 가짜 응답을 조금 늦게 줘요. 불러오는 중 화면도 볼 수 있게 */
 const DELAY_MS = 300;
@@ -24,6 +25,7 @@ export function mockApi(options: MockOptions): Plugin {
     name: 'jiphajang-mock-api',
     apply: 'serve',
     configureServer(server) {
+      setMockScale(options.scale);
       server.middlewares.use('/api', async (req, res) => {
         const response = handleMock(
           {
@@ -48,7 +50,7 @@ export function mockApi(options: MockOptions): Plugin {
         }, DELAY_MS);
       });
       server.config.logger.info(
-        `  ➜  가짜 서버: ${options.name}(${options.role}), 상황 ${options.scenario}`,
+        `  ➜  가짜 서버: ${options.name}(${options.role}), 상황 ${options.scenario}, 행 ${options.scale}배`,
       );
     },
   };

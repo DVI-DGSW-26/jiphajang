@@ -11,6 +11,7 @@
  * - `MOCK_ROLE=VIEWER` — 열람자로 들어가요
  * - `MOCK_SCENARIO=no-group` — 로그인은 되는데 `/auth/me`가 401 (그룹에 없는 계정)
  * - `MOCK_SCENARIO=login-error` — 로그인에서 `#error=`로 돌아와요
+ * - `MOCK_SCALE=20` — 목록 행을 20배로 (많은 행에서 느려지지 않는지 볼 때)
  *
  * 목록은 예시 데이터로 답해요(`mock/list.ts`). 받기·고치기 모양은 서버와 맞춘 약속이고, 열은 잠정이에요.
  */
@@ -27,6 +28,8 @@ export type MockOptions = {
   role: 'REPORTER' | 'VIEWER';
   scenario: 'ok' | 'no-group' | 'login-error';
   name: string;
+  /** 목록 행 배수 (1~100) */
+  scale: number;
 };
 
 export type MockRequest = {
@@ -59,6 +62,7 @@ export function readMockOptions(env: Record<string, string | undefined>): MockOp
         ? env.MOCK_SCENARIO
         : 'ok',
     name: env.MOCK_NAME || '홍길동',
+    scale: Number(env.MOCK_SCALE) || 1,
   };
 }
 

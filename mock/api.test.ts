@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { handleMock, MOCK_TOKEN_PREFIX, type MockOptions, readMockOptions } from './api.ts';
 
-const ok: MockOptions = { role: 'REPORTER', scenario: 'ok', name: '홍길동' };
+const ok: MockOptions = { role: 'REPORTER', scenario: 'ok', name: '홍길동', scale: 1 };
 const redirect = encodeURIComponent('http://localhost:5173/auth/callback');
 
 test('로그인하면 콜백 주소의 fragment로 토큰을 돌려보내요', () => {
@@ -50,6 +50,7 @@ test('환경 변수로 상황을 골라요. 모르는 값은 기본값이에요'
     role: 'VIEWER',
     scenario: 'no-group',
     name: '김철수',
+    scale: 1,
   });
   expect(readMockOptions({ MOCK_SCENARIO: 'weird' }).scenario).toBe('ok');
 });
