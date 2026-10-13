@@ -50,7 +50,7 @@ export function mockApi(options: MockOptions): Plugin {
         }, DELAY_MS);
       });
       server.config.logger.info(
-        `  ➜  가짜 서버: ${options.name}(${options.role}), 상황 ${options.scenario}, 행 ${options.scale}배`,
+        `  ➜  가짜 서버: ${options.name}(${options.role}), 상황 ${options.scenario}, 행 ${options.scale}배${options.tokenTtl ? `, 토큰 ${options.tokenTtl}초` : ''}`,
       );
     },
   };

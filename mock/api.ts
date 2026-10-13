@@ -12,6 +12,7 @@
  * - `MOCK_SCENARIO=no-group` — 로그인은 되는데 `/auth/me`가 401 (그룹에 없는 계정)
  * - `MOCK_SCENARIO=login-error` — 로그인에서 `#error=`로 돌아와요
  * - `MOCK_SCALE=20` — 목록 행을 20배로 (많은 행에서 느려지지 않는지 볼 때)
+ * - `MOCK_TOKEN_TTL=60` — 토큰이 60초 뒤 끝나고 갱신도 안 돼요 (로그인 만료 창을 볼 때)
  *
  * 목록은 예시 데이터로 답해요(`mock/list.ts`). 받기·고치기 모양은 서버와 맞춘 약속이고, 열은 잠정이에요.
  */
@@ -30,6 +31,8 @@ export type MockOptions = {
   name: string;
   /** 목록 행 배수 (1~100) */
   scale: number;
+  /** 토큰 수명(초). 0이면 끝나지 않아요. 정하면 갱신도 401이에요 */
+  tokenTtl: number;
 };
 
 export type MockRequest = {
@@ -63,13 +66,27 @@ export function readMockOptions(env: Record<string, string | undefined>): MockOp
         : 'ok',
     name: env.MOCK_NAME || '홍길동',
     scale: Number(env.MOCK_SCALE) || 1,
+    tokenTtl: Math.max(Number(env.MOCK_TOKEN_TTL) || 0, 0),
   };
 }
 
-export function handleMock(request: MockRequest, options: MockOptions): MockResponse {
+/** 가짜 토큰은 `mock-token.<만든 시각>`이에요. 수명을 정했으면 지난 것은 통하지 않아요 */
+function validToken(authorization: string | undefined, options: MockOptions, now: number): boolean {
+  const prefix = `Bearer ${MOCK_TOKEN_PREFIX}.`;
+  if (!authorization?.startsWith(prefix)) return false;
+  if (options.tokenTtl === 0) return true;
+  const issued = Number(authorization.slice(prefix.length));
+  return now - issued < options.tokenTtl * 1000;
+}
+
+export function handleMock(
+  request: MockRequest,
+  options: MockOptions,
+  now = Date.now(),
+): MockResponse {
   const url = new URL(request.url, 'http://mock.local');
   const route = `${request.method.toUpperCase()} ${url.pathname}`;
-  const bearer = request.authorization?.startsWith(`Bearer ${MOCK_TOKEN_PREFIX}`) ?? false;
+  const bearer = validToken(request.authorization, options, now);
 
   switch (route) {
     case 'GET /auth/login': {
@@ -79,7 +96,7 @@ export function handleMock(request: MockRequest, options: MockOptions): MockResp
       const target =
         options.scenario === 'login-error'
           ? `${redirect}#error=${encodeURIComponent('가짜 서버: 로그인하지 못했어요. 다시 로그인해 주세요.')}`
-          : `${redirect}#token=${MOCK_TOKEN_PREFIX}.${Date.now()}`;
+          : `${redirect}#token=${MOCK_TOKEN_PREFIX}.${now}`;
       return { status: 302, headers: { Location: target } };
     }
 
@@ -91,7 +108,9 @@ export function handleMock(request: MockRequest, options: MockOptions): MockResp
       return { status: 200, json: { name: options.name, role: options.role } };
 
     case 'GET /auth/refresh':
-      return { status: 200, json: { token: `${MOCK_TOKEN_PREFIX}.${Date.now()}`, expiresIn: 900 } };
+      // 수명을 정했으면 세션 쿠키가 없는 것처럼 굴어요 — 다시 로그인해야 해요
+      if (options.tokenTtl > 0) return message(401, '가짜 서버: 세션이 끝났어요.');
+      return { status: 200, json: { token: `${MOCK_TOKEN_PREFIX}.${now}`, expiresIn: 900 } };
 
     case 'POST /auth/logout':
       return { status: 204 };
