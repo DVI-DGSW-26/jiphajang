@@ -9,7 +9,7 @@ type Props = {
   actions?: ReactNode;
 };
 
-/** 빈 화면 — 디자인 매뉴얼 7장. 빈 표 대신 지금 상황과 다음 행동을 알려줘요 */
+/** 빈 화면. 빈 표 대신 지금 상황과 다음 행동을 알려줘요 */
 export function EmptyState({ title, description, actions }: Props) {
   return (
     <section className="jh-empty">

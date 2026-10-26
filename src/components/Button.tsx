@@ -17,7 +17,7 @@ type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> & {
   children: ReactNode;
 };
 
-/** 버튼 — 디자인 매뉴얼 7장. 글자는 누르면 일어나는 일을 써요(“엑셀 다운로드”, “확인” 말고) */
+/** 버튼. 글자는 누르면 일어나는 일을 써요(“엑셀 다운로드”, “확인” 말고) */
 export function Button({
   variant = 'secondary',
   fileType,

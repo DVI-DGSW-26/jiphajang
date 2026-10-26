@@ -1,5 +1,5 @@
 /**
- * 숫자·날짜 형식 — 디자인 매뉴얼 9장(상태 · 숫자 · 레이아웃).
+ * 숫자·날짜 형식.
  *
  * 금액·단가·환율은 서버가 **문자열(decimal)** 로 보내요. `Number()`로 바꾸면 소수 오차가
  * 생기니, 문자열을 그대로 `Intl.NumberFormat`에 넘겨요(문자열을 정확한 십진수로 읽어요).
@@ -11,7 +11,7 @@
 
 export type NumericInput = number | string | null | undefined;
 
-const MINUS = '−'; // − (매뉴얼: 음수는 앞에 −)
+const MINUS = '−'; // 음수는 앞에 −
 
 function makeFormat(fractionDigits: number): Intl.NumberFormat {
   return new Intl.NumberFormat('en-US', {
@@ -86,7 +86,7 @@ export function formatShortDate(value: DateInput): string {
   return formatDate(value).slice(5);
 }
 
-/** 파일 이름에 붙이는 기준일 `YYYYMMDD` — 매뉴얼 10장 `결과 이름_기준일` */
+/** 파일 이름에 붙이는 기준일 `YYYYMMDD` — `결과 이름_기준일` */
 export function formatFileDate(value: DateInput): string {
   return formatDate(value).replaceAll('-', '');
 }

@@ -1,6 +1,6 @@
 /**
  * 엑셀(.xlsx) 파일 만들기 — 시트 하나짜리 표만 써요. 라이브러리 없이 직접 만들어요
- * (xlsx는 XML 몇 개를 zip으로 묶은 것이에요). 서식은 디자인 매뉴얼 9장: 흑백, 머리줄 고정,
+ * (xlsx는 XML 몇 개를 zip으로 묶은 것이에요). 서식: 흑백, 머리줄 고정,
  * 자동 필터, 숫자는 숫자 서식.
  */
 
@@ -147,7 +147,7 @@ function sheetName(name: string): string {
 
 const FONT = '<name val="맑은 고딕"/><family val="2"/><charset val="129"/>';
 
-// 흰 바탕에 진회색·회색만 (매뉴얼 9장)
+// 흰 바탕에 진회색·회색만
 const STYLES_XML =
   '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
   '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
