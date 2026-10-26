@@ -10,7 +10,7 @@ const ROLE_LABEL: Record<AuthMe['role'], string> = {
 };
 
 /**
- * 상단 바 — 디자인 매뉴얼 7장. 화면에서 `ink`를 넓게 쓰는 유일한 곳이에요.
+ * 상단 바. 화면에서 `ink`를 넓게 쓰는 유일한 곳이에요.
  * 지금 보는 메뉴에 형광 밑줄. 휴대폰 폭에서는 메뉴만 가로로 밀어요.
  */
 export function TopBar({ me }: { me: AuthMe }) {

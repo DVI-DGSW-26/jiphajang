@@ -3,13 +3,13 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useS
 type Tone = 'ok' | 'bad';
 type ToastItem = { id: number; message: string; tone: Tone };
 
-/** 알림이 떠 있는 시간. 매뉴얼은 2~4초 */
+/** 알림이 떠 있는 시간 */
 export const TOAST_MS = 3000;
 
 const ToastContext = createContext<((message: string, tone?: Tone) => void) | null>(null);
 
 /**
- * 알림(토스트) — 디자인 매뉴얼 7장. 화면 아래 가운데, 3초, **한 번에 하나만**.
+ * 알림(토스트). 화면 아래 가운데, 3초, **한 번에 하나만**.
  * 새 알림이 오면 이전 알림을 바로 바꿔요. 사과 문구는 쓰지 않아요.
  */
 export function ToastProvider({ children }: { children: ReactNode }) {

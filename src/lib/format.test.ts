@@ -10,7 +10,7 @@ import {
   formatUsd,
 } from './format.ts';
 
-test('매뉴얼 9장의 자릿수대로 보여줘요', () => {
+test('정해진 자릿수대로 보여줘요', () => {
   expect(formatQty(60000)).toBe('60,000');
   expect(formatUnitPrice('0.512')).toBe('0.5120');
   expect(formatUsd('30720')).toBe('30,720.00');
