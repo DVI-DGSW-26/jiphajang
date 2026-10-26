@@ -15,7 +15,6 @@
     "format": "biome check --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "manual:pdf": "node scripts/manual-pdf.mjs",
     "dev:mock": "vite --mode mock"
   },
   "dependencies": {
