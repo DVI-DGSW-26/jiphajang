@@ -2,7 +2,7 @@ import type { ParseResult } from './gridModel.ts';
 
 /**
  * 직접 입력 칸에 친 글자를 서버에 보낼 값으로 바꿔요. 빈 칸은 `null`(지우기).
- * 실패 문구는 고치는 방법까지 써요(디자인 매뉴얼 5장).
+ * 실패 문구는 고치는 방법까지 써요.
  */
 
 export function parseText(text: string): ParseResult {

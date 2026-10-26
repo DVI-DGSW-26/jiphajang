@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { usePageTitle } from './usePageTitle.ts';
 
 type Props = {
-  /** 화면 제목. 한 화면에 하나 — 매뉴얼 4장 `title` */
+  /** 화면 제목. 한 화면에 하나 */
   title: string;
   /** 제목 위의 작은 길잡이 — “결과” */
   eyebrow?: ReactNode;

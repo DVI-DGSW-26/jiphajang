@@ -14,7 +14,7 @@ type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> & {
 };
 
 /**
- * 입력칸 — 디자인 매뉴얼 7장. 라벨은 항상 위, 오류 문구는 칸 아래.
+ * 입력칸. 라벨은 항상 위, 오류 문구는 칸 아래.
  * 마스터에서 고른 값은 `코드 · 이름`으로 넘겨요(예: `P-110 · 품명`).
  */
 export function Field({ label, source, error, hint, numeric, className, ...inputProps }: Props) {
