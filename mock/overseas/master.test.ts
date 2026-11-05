@@ -18,7 +18,7 @@ type PartRow = { id: string; partNo: string; unitPrice: string | null; customerN
 
 test('기간 없이 마스터 전체를 받아요. 품번에는 고객사 이름과 현재 단가가 들어 있어요', () => {
   const body = call('GET', '/master/parts').json as { items: PartRow[]; total: number };
-  expect(body.total).toBe(3);
+  expect(body.total).toBe(4);
   expect(body.items[0]).toMatchObject({
     partNo: 'P1',
     customerName: '고객사 A',
@@ -63,30 +63,53 @@ test('같은 적용일로 다시 더하면 나중 것이 적용되고, 앞의 �
   expect(history.total).toBe(3);
 });
 
-test('단가는 품번 칸 고치기로 바꿀 수 없어요', () => {
-  const response = call('PATCH', '/master/parts/p1', { unitPrice: '9.0000' });
-  expect(response.status).toBe(400);
+test('단가는 0보다 커야 하고, 품번 칸 고치기로 바꿀 수 없어요', () => {
+  expect(call('PATCH', '/master/parts/p1', { unitPrice: '9.0000' }).status).toBe(400);
+  const zero = call('POST', '/master/parts/p1/prices', {
+    unitPrice: '0',
+    effectiveFrom: '2026-03-01',
+  });
+  expect(zero.status).toBe(400);
 });
 
-test('품번을 추가하면 첫 단가까지 들어가요. 같은 고객사에 같은 품번은 409', () => {
+test('품번을 추가하면 첫 단가까지 들어가요. 같은 품번은 고객사가 달라도 409', () => {
   const body = {
     partNo: 'P9',
     customerId: 'c2',
     productCode: 'R2',
     project: null,
-    setQty: '50',
+    setQtyPerBox: '50',
     unitPrice: '2.0000',
-    effectiveFrom: '2026-01-15',
+    priceEffectiveFrom: '2026-01-15',
   };
   const created = call('POST', '/master/parts', body);
   expect(created.status).toBe(201);
   expect(created.json).toMatchObject({
     partNo: 'P9',
     customerName: '고객사 B',
-    setQty: 50,
+    setQtyPerBox: 50,
     unitPrice: '2.0000',
   });
   expect(call('POST', '/master/parts', body).status).toBe(409);
+  expect(call('POST', '/master/parts', { ...body, customerId: 'c1' }).status).toBe(409);
+});
+
+test('고객사와 창고를 추가할 때 새 칸도 저장해요', () => {
+  const customer = call('POST', '/master/customers', {
+    name: '고객사 C',
+    shipTo: '납품처 C',
+    paymentTermDays: '45',
+    invoiceTemplate: 'template-2',
+  });
+  expect(customer.json).toMatchObject({ paymentTermDays: 45, invoiceTemplate: 'template-2' });
+
+  expect(call('POST', '/master/warehouses', { name: '창고 8' }).status).toBe(400);
+  const warehouse = call('POST', '/master/warehouses', {
+    name: '창고 8',
+    location: '미국',
+    contactEmail: 'contact@example.com',
+  });
+  expect(warehouse.json).toMatchObject({ location: '미국', contactEmail: 'contact@example.com' });
 });
 
 test('칸을 고치면 계산 칸까지 돌려주고, 필수 칸은 비울 수 없어요', () => {
@@ -98,7 +121,7 @@ test('칸을 고치면 계산 칸까지 돌려주고, 필수 칸은 비울 수 �
   // 고객사 이름을 바꾸면 품번 목록에도 따라와요
   call('PATCH', '/master/customers/c2', { name: '고객사 B2' });
   const parts = call('GET', '/master/parts').json as { items: PartRow[] };
-  expect(parts.items.find((row) => row.partNo === 'P3')?.customerName).toBe('고객사 B2');
+  expect(parts.items.find((row) => row.partNo === 'P4')?.customerName).toBe('고객사 B2');
 });
 
 test('열람자는 받기만 해요. 토큰이 없으면 401', () => {
@@ -108,6 +131,6 @@ test('열람자는 받기만 해요. 토큰이 없으면 401', () => {
     call('POST', '/master/parts/p1/prices', { unitPrice: '1', effectiveFrom: '2026-01-01' }, viewer)
       .status,
   ).toBe(403);
-  expect(call('PATCH', '/master/warehouses/w1', { region: 'x' }, viewer).status).toBe(403);
+  expect(call('PATCH', '/master/warehouses/w1', { location: 'x' }, viewer).status).toBe(403);
   expect(handleMock({ method: 'POST', url: '/master/warehouses' }, reporter).status).toBe(401);
 });

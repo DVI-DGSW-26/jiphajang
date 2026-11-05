@@ -59,6 +59,15 @@ export const formatRate = (value: NumericInput) => format(value, formats.rate);
 /** 금액(KRW): 정수, 천 단위 쉼표 — `42,562,560` */
 export const formatKrw = (value: NumericInput) => format(value, formats.krw);
 
+const withDollar = (text: string) =>
+  text === '' ? '' : text.startsWith(MINUS) ? `${MINUS}$${text.slice(1)}` : `$${text}`;
+
+/** 해외 출고 단가 — `$1.2500` */
+export const formatPrice = (value: NumericInput) => withDollar(formatUnitPrice(value));
+
+/** 해외 출고 금액 — `$11,250.00` */
+export const formatMoney = (value: NumericInput) => withDollar(formatUsd(value));
+
 export type DateInput = Date | string | null | undefined;
 
 /**

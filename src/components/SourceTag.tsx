@@ -1,19 +1,21 @@
 /**
  * 값의 출처.
- * 판독(Invoice에서 읽음) · 계산 · 마스터는 미색 칸에 이 표시를 붙이고, 직접 입력은 흰 칸으로 둬요.
+ * 판독(Invoice에서 읽음) · 계산 · 마스터 · 규칙은 미색 칸에 이 표시를 붙이고, 직접 입력은 흰 칸으로 둬요.
  */
-export type Source = 'read' | 'calc' | 'master';
+export type Source = 'read' | 'calc' | 'master' | 'rule';
 
 export const SOURCE_LABEL: Record<Source, string> = {
   read: '판독',
   calc: '계산',
   master: '마스터',
+  rule: '규칙',
 };
 
 const SOURCE_TITLE: Record<Source, string> = {
   read: 'Invoice에서 읽은 값',
   calc: '다른 값으로 계산한 값',
   master: '마스터에서 가져온 값',
+  rule: '정해진 규칙으로 만든 값',
 };
 
 export function SourceTag({ source }: { source: Source }) {

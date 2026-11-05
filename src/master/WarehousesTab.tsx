@@ -1,32 +1,28 @@
 import { FieldForm, type FormValues } from '../components/FieldForm.tsx';
 import { FormDialog } from '../components/FormDialog.tsx';
-import type { GridColumn } from '../components/grid/gridModel.ts';
-import { parseText, required } from '../components/grid/parsers.ts';
 import { useToast } from '../components/Toast.tsx';
+import { API } from '../config/api.ts';
+import { warehouseColumns, warehouseFields } from '../config/forms/master.ts';
+import { gridColumns } from '../forms/fromConfig.ts';
 import type { AuthMe } from '../lib/api.ts';
 import { postListRow, useList } from '../lib/useList.ts';
 import { MasterList } from './MasterList.tsx';
-import { WAREHOUSES_PATH, type Warehouse } from './master.ts';
+import type { Warehouse } from './master.ts';
 
-const parseName = required(parseText, '창고 이름을 넣어 주세요.');
-
-const COLUMNS: GridColumn<Warehouse>[] = [
-  { key: 'name', header: '이름', value: (r) => r.name, edit: { parse: parseName } },
-  { key: 'region', header: '지역', value: (r) => r.region, edit: { parse: parseText } },
-];
+const COLUMNS = gridColumns<Warehouse>(warehouseColumns);
 
 const rowKey = (row: Warehouse) => row.id;
 const rowLabel = (row: Warehouse) => row.name;
 
 export function WarehousesTab({ me }: { me: AuthMe }) {
-  const list = useList<Warehouse>(WAREHOUSES_PATH, null);
+  const list = useList<Warehouse>(API.warehouses, null);
   const toast = useToast();
 
   return (
     <MasterList
       me={me}
       title="창고"
-      path={WAREHOUSES_PATH}
+      path={API.warehouses}
       list={list}
       columns={COLUMNS}
       rowKey={rowKey}
@@ -39,14 +35,11 @@ export function WarehousesTab({ me }: { me: AuthMe }) {
       renderAdd={(close) => (
         <FormDialog title="창고 추가" onClose={close}>
           <FieldForm
-            fields={[
-              { key: 'name', label: '이름', parse: parseName },
-              { key: 'region', label: '지역', parse: parseText },
-            ]}
+            defs={warehouseFields}
             submitLabel="창고 추가하기"
             onClose={close}
             onSubmit={async (values: FormValues) => {
-              const row = await postListRow<Warehouse>(WAREHOUSES_PATH, values);
+              const row = await postListRow<Warehouse>(API.warehouses, values);
               list.appendRow(row);
               toast(`${row.name}을 추가했어요.`);
               close();

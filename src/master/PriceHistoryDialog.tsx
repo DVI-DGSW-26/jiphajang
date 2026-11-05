@@ -4,11 +4,13 @@ import { type Column, DataTable } from '../components/DataTable.tsx';
 import { FieldForm, type FormValues } from '../components/FieldForm.tsx';
 import { FormDialog } from '../components/FormDialog.tsx';
 import { useToast } from '../components/Toast.tsx';
+import { API } from '../config/api.ts';
+import { priceChangeFields } from '../config/forms/master.ts';
 import type { AuthMe } from '../lib/api.ts';
-import { formatDate, formatUnitPrice } from '../lib/format.ts';
+import { formatDate, formatPrice } from '../lib/format.ts';
 import { postListRow, useList } from '../lib/useList.ts';
-import { type Part, type PartPrice, partPricesPath } from './master.ts';
-import { parseEffectiveFrom, parseUnitPrice } from './priceFields.ts';
+import { today } from '../overseas/calc.ts';
+import type { Part, PartPrice } from './master.ts';
 
 const COLUMNS: Column<PartPrice>[] = [
   {
@@ -22,9 +24,9 @@ const COLUMNS: Column<PartPrice>[] = [
   },
   {
     key: 'unitPrice',
-    header: '단가 (USD)',
+    header: '단가',
     numeric: true,
-    cell: (row) => formatUnitPrice(row.unitPrice),
+    cell: (row) => formatPrice(row.unitPrice),
   },
   { key: 'createdAt', header: '등록일', cell: (row) => formatDate(row.createdAt) },
 ];
@@ -37,16 +39,16 @@ type Props = {
   onClose: () => void;
 };
 
-/** 단가 이력. **덮어쓰지 않아요** — 틀렸으면 새 행을 더하고, 같은 적용일이면 나중 것이 적용돼요 */
+/** 단가 변경과 이력. **덮어쓰지 않아요** — 틀렸으면 새 행을 더하고, 같은 적용일이면 나중 것이 적용돼요 */
 export function PriceHistoryDialog({ me, part, onChanged, onClose }: Props) {
-  const path = partPricesPath(part.id);
+  const path = API.partPrices(part.id);
   const prices = useList<PartPrice>(path, null);
   const toast = useToast();
   // 저장한 뒤 칸을 비우려고 양식을 새로 그려요
   const [formKey, setFormKey] = useState(0);
 
   return (
-    <FormDialog title={`${part.partNo} 단가 이력`} onClose={onClose}>
+    <FormDialog title={`${part.partNo} 단가 변경`} onClose={onClose}>
       {prices.state.status === 'error' ? (
         <p className="jh-field__error" role="alert">
           단가 이력을 불러오지 못했어요.{' '}
@@ -70,15 +72,8 @@ export function PriceHistoryDialog({ me, part, onChanged, onClose }: Props) {
       {me.role === 'REPORTER' ? (
         <FieldForm
           key={formKey}
-          fields={[
-            { key: 'unitPrice', label: '새 단가 (USD)', parse: parseUnitPrice, numeric: true },
-            {
-              key: 'effectiveFrom',
-              label: '적용일',
-              parse: parseEffectiveFrom,
-              initial: formatDate(new Date()),
-            },
-          ]}
+          defs={priceChangeFields}
+          initial={{ effectiveFrom: today() }}
           submitLabel="단가 추가하기"
           onClose={onClose}
           onSubmit={async (values: FormValues) => {

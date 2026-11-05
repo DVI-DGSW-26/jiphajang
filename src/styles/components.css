@@ -584,7 +584,7 @@
 }
 
 .jh-period__date {
-  width: 150px;
+  width: 11.5em;
   font: var(--type-number);
 }
 
@@ -972,4 +972,172 @@
   margin: 0;
   color: var(--text-tertiary);
   font: var(--type-small);
+}
+
+/* ── 해외 출고 입력 화면 ─────────────────────────────── */
+.jh-section {
+  margin-bottom: var(--space-5);
+}
+
+.jh-section__title {
+  margin: 0 0 12px;
+  font: var(--type-heading);
+}
+
+.jh-lines {
+  margin-bottom: 12px;
+}
+
+/* biome-ignore lint/style/noDescendingSpecificity: 확인 필요 행 규칙과 다른 속성이라 겹치지 않아요 */
+.jh-lines .jh-table td,
+.jh-lines .jh-table th {
+  vertical-align: top;
+}
+
+/* biome-ignore lint/style/noDescendingSpecificity: 확인 필요 행 규칙과 다른 속성이라 겹치지 않아요 */
+.jh-lines .jh-table td {
+  padding-block: 6px;
+  line-height: var(--height-control);
+}
+
+.jh-lines .jh-table td.jh-lines__input {
+  min-width: 170px;
+  line-height: normal;
+}
+
+.jh-lines .jh-field__error {
+  max-width: 240px;
+  margin-top: 4px;
+  white-space: normal;
+}
+
+.jh-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.jh-button--small {
+  min-height: 32px;
+  padding: 0 10px;
+  font: var(--type-small);
+  font-weight: 600;
+}
+
+/* 파일 고르기 칸을 숨긴 라벨 단추. 키보드 초점은 숨긴 칸이 받아요 */
+label.jh-button:focus-within {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.jh-cell-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jh-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.jh-stats--page {
+  margin-bottom: var(--space-4);
+}
+
+.jh-stat {
+  padding: 12px var(--space-3);
+  background: var(--paper-warm);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.jh-stat dt {
+  color: var(--text-tertiary);
+  font: var(--type-small);
+}
+
+.jh-stat dd {
+  margin: 4px 0 0;
+  font: var(--type-number);
+  font-size: var(--size-heading);
+  font-weight: 600;
+}
+
+.jh-note-list {
+  margin: 0;
+  padding: 0;
+  color: var(--text-secondary);
+  font: var(--type-small);
+  list-style: none;
+}
+
+.jh-note {
+  margin: 12px 0 0;
+  color: var(--text-tertiary);
+  font: var(--type-small);
+}
+
+.jh-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.jh-filters > .jh-field {
+  width: 200px;
+}
+
+.jh-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px var(--space-3);
+  margin: 0;
+}
+
+.jh-details dt {
+  color: var(--text-tertiary);
+  font: var(--type-small);
+}
+
+.jh-details dd {
+  margin: 2px 0 0;
+}
+
+.jh-status-line {
+  margin: 0 0 var(--space-3);
+}
+
+.jh-output__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.jh-output__head .jh-section__title {
+  margin: 0;
+}
+
+.jh-output__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.jh-output__preview {
+  padding: var(--space-5) var(--space-3);
+  border: 1px dashed var(--grey-300);
+  border-radius: var(--radius-md);
+  color: var(--text-tertiary);
+  text-align: center;
 }

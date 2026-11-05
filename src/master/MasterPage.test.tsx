@@ -16,7 +16,7 @@ const part: Part = {
   customerName: '고객사 A',
   productCode: 'MT',
   project: '모델 1',
-  setQty: 100,
+  setQtyPerBox: 100,
   unitPrice: '1.2500',
   priceEffectiveFrom: '2026-01-01',
 };
@@ -73,6 +73,8 @@ test('기간 없이 목록을 받고, 탭으로 옮겨 다녀요', async () => {
   renderTab(reporter);
 
   expect(await screen.findByText('P1')).toBeInTheDocument();
+  // 단가는 달러 표시와 소수 4자리예요
+  expect(screen.getByText(/\$1\.2500/)).toBeInTheDocument();
   const [first] = fetchMock.mock.calls[0] ?? [];
   const query = new URL(first as string, 'http://x').searchParams;
   expect(query.has('from')).toBe(false);
@@ -87,7 +89,7 @@ test('품번을 추가하면 칸을 확인하고 보낸 뒤 목록에 더해요'
   const fetchMock = stubApi((method, url) => {
     if (url.pathname === '/api/master/customers') {
       return json(200, {
-        items: [{ id: 'c1', name: '고객사 A', shipToName: '납품처 A', paymentTermDays: 30 }],
+        items: [{ id: 'c1', name: '고객사 A', shipTo: '납품처 A', paymentTermDays: 30 }],
         total: 1,
       });
     }
@@ -109,8 +111,15 @@ test('품번을 추가하면 칸을 확인하고 보낸 뒤 목록에 더해요'
   fireEvent.change(dialog.getByLabelText('품번'), { target: { value: ' P1 ' } });
   fireEvent.change(dialog.getByLabelText('고객사'), { target: { value: 'c1' } });
   fireEvent.change(dialog.getByLabelText('제품코드'), { target: { value: 'mt' } });
+  fireEvent.change(dialog.getByLabelText('박스당 수량'), { target: { value: '0' } });
+  fireEvent.change(dialog.getByLabelText('현재 단가'), { target: { value: '0' } });
+  fireEvent.click(dialog.getByRole('button', { name: '품번 추가하기' }));
+  // 범위를 벗어나면 그 칸에 알려줘요
+  expect(dialog.getByText('1 이상으로 넣어 주세요.')).toBeInTheDocument();
+  expect(dialog.getByText('0보다 크게 넣어 주세요.')).toBeInTheDocument();
+
   fireEvent.change(dialog.getByLabelText('박스당 수량'), { target: { value: '1,000' } });
-  fireEvent.change(dialog.getByLabelText('단가 (USD)'), { target: { value: '1.25' } });
+  fireEvent.change(dialog.getByLabelText('현재 단가'), { target: { value: '1.25' } });
   fireEvent.change(dialog.getByLabelText('단가 적용일'), { target: { value: '2026.1.5' } });
   fireEvent.click(dialog.getByRole('button', { name: '품번 추가하기' }));
 
@@ -120,9 +129,9 @@ test('품번을 추가하면 칸을 확인하고 보낸 뒤 목록에 더해요'
     customerId: 'c1',
     productCode: 'MT',
     project: null,
-    setQty: '1000',
+    setQtyPerBox: '1000',
     unitPrice: '1.25',
-    effectiveFrom: '2026-01-05',
+    priceEffectiveFrom: '2026-01-05',
   });
   expect(await screen.findByText('P1')).toBeInTheDocument();
 });
@@ -137,11 +146,39 @@ test('서버가 거절하면 창을 닫지 않고 이유를 보여줘요', async
 
   fireEvent.click(await screen.findByRole('button', { name: '창고 추가' }));
   const dialog = within(screen.getByRole('dialog', { name: '창고 추가' }));
-  fireEvent.change(dialog.getByLabelText('이름'), { target: { value: '창고 1' } });
+  fireEvent.change(dialog.getByLabelText('창고명'), { target: { value: '창고 1' } });
+  fireEvent.change(dialog.getByLabelText('위치'), { target: { value: '미국' } });
   fireEvent.click(dialog.getByRole('button', { name: '창고 추가하기' }));
 
   expect(await dialog.findByRole('alert')).toHaveTextContent('같은 이름의 창고가 이미 있어요.');
-  expect(dialog.getByLabelText('이름')).toHaveValue('창고 1');
+  expect(dialog.getByLabelText('창고명')).toHaveValue('창고 1');
+});
+
+test('고객사 추가: 결제 조건은 30이 기본이고 양식을 고를 수 있어요', async () => {
+  const fetchMock = stubApi((method, url, body) =>
+    method === 'POST' && url.pathname === '/api/master/customers'
+      ? json(201, { id: 'c9', ...body, paymentTermDays: 30 })
+      : undefined,
+  );
+  renderTab(reporter, 'customers');
+
+  fireEvent.click(await screen.findByRole('button', { name: '고객사 추가' }));
+  const dialog = within(screen.getByRole('dialog', { name: '고객사 추가' }));
+  expect(dialog.getByLabelText('결제 조건(일)')).toHaveValue('30');
+  fireEvent.change(dialog.getByLabelText('고객사명'), { target: { value: '고객사 C' } });
+  fireEvent.change(dialog.getByLabelText('납품처'), { target: { value: '납품처 C' } });
+  fireEvent.change(dialog.getByLabelText('인보이스 양식'), { target: { value: 'template-2' } });
+  fireEvent.click(dialog.getByRole('button', { name: '고객사 추가하기' }));
+
+  expect(await screen.findByText('Net30')).toBeInTheDocument();
+  expect(screen.getByText('양식 2')).toBeInTheDocument();
+  const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
+  expect(JSON.parse(post?.[1]?.body as string)).toEqual({
+    name: '고객사 C',
+    shipTo: '납품처 C',
+    paymentTermDays: '30',
+    invoiceTemplate: 'template-2',
+  });
 });
 
 test('Esc로 창을 닫아요', async () => {
@@ -178,17 +215,17 @@ test('단가를 더하면 현재 단가가 바뀌고 이력을 다시 받아요'
   });
   renderTab(reporter);
 
-  fireEvent.click(await screen.findByRole('button', { name: 'P1 단가 이력' }));
-  const dialog = within(screen.getByRole('dialog', { name: 'P1 단가 이력' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'P1 단가 변경' }));
+  const dialog = within(screen.getByRole('dialog', { name: 'P1 단가 변경' }));
   expect(await dialog.findByText('지금 적용')).toBeInTheDocument();
 
-  fireEvent.change(dialog.getByLabelText('새 단가 (USD)'), { target: { value: '1.5' } });
+  fireEvent.change(dialog.getByLabelText('새 단가'), { target: { value: '1.5' } });
   fireEvent.change(dialog.getByLabelText('적용일'), { target: { value: '2026-11-01' } });
   fireEvent.click(dialog.getByRole('button', { name: '단가 추가하기' }));
 
   expect(await dialog.findByText(/2026-11-01/)).toBeInTheDocument();
   // 저장 뒤에는 칸을 비워요
-  await waitFor(() => expect(dialog.getByLabelText('새 단가 (USD)')).toHaveValue(''));
+  await waitFor(() => expect(dialog.getByLabelText('새 단가')).toHaveValue(''));
   // 표의 현재 단가도 바뀌어요
   expect(screen.getAllByText(/1\.5000/).length).toBeGreaterThan(1);
 });
@@ -203,10 +240,10 @@ test('열람자는 추가할 수 없고 단가 이력은 볼 수 있어요', asy
   });
   renderTab(viewer);
 
-  fireEvent.click(await screen.findByRole('button', { name: 'P1 단가 이력' }));
-  const dialog = within(screen.getByRole('dialog', { name: 'P1 단가 이력' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'P1 단가 변경' }));
+  const dialog = within(screen.getByRole('dialog', { name: 'P1 단가 변경' }));
   expect(await dialog.findByText('지금 적용')).toBeInTheDocument();
-  expect(dialog.queryByLabelText('새 단가 (USD)')).not.toBeInTheDocument();
+  expect(dialog.queryByLabelText('새 단가')).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: '품번 추가' })).not.toBeInTheDocument();
 
   fireEvent.click(dialog.getByRole('button', { name: '닫기' }));

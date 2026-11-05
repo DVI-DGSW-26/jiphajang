@@ -7,7 +7,7 @@
 export type MenuItem = { path: string; label: string };
 
 export const MENU: MenuItem[] = [
-  { path: '/containers', label: '컨테이너 입고' },
+  { path: '/inbound', label: '컨테이너 입고' },
   { path: '/invoices/new', label: '인보이스 작성' },
   { path: '/shipments', label: '출고 확정' },
   { path: '/collections', label: '수금 관리' },

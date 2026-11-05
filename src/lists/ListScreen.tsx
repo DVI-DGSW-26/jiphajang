@@ -1,29 +1,15 @@
-import { type ReactNode, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router';
+import { type ReactNode, useMemo } from 'react';
 import { EmptyState } from '../components/EmptyState.tsx';
 import { Grid } from '../components/grid/Grid.tsx';
 import type { GridColumn } from '../components/grid/gridModel.ts';
-import { isPeriod, monthPeriod, type Period, PeriodFilter } from '../components/PeriodFilter.tsx';
+import { PeriodFilter } from '../components/PeriodFilter.tsx';
 import { Page } from '../layout/Page.tsx';
 import type { AuthMe } from '../lib/api.ts';
 import { formatFileDate } from '../lib/format.ts';
 import { useList } from '../lib/useList.ts';
 import { ListError } from './ListError.tsx';
+import { usePeriod } from './usePeriod.ts';
 import { useRowEdit } from './useRowEdit.ts';
-
-/** 주소창의 `?from=&to=`. 없거나 틀리면 이번 달 */
-function usePeriod(today: Date): [Period, (period: Period) => void] {
-  const [params, setParams] = useSearchParams();
-  const from = params.get('from');
-  const to = params.get('to');
-  const fallback = monthPeriod(today);
-  const period = from && to && isPeriod(from, to) ? { from, to } : fallback;
-  const setPeriod = useCallback(
-    (next: Period) => setParams({ from: next.from, to: next.to }, { replace: true }),
-    [setParams],
-  );
-  return [period, setPeriod];
-}
 
 type Props<Row> = {
   me: AuthMe;

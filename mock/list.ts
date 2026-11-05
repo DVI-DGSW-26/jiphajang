@@ -27,6 +27,8 @@ type Options<Row extends { id: string }> = {
   required?: readonly (keyof Row & string)[];
   /** 칸 값이 틀리면 문구. 맞으면 `null` */
   check?: (key: keyof Row & string, value: string, row: Row) => string | null;
+  /** 칸 사이의 규칙을 고친 뒤의 행으로 확인해요. 틀리면 문구 */
+  checkRow?: (row: Row) => string | null;
   /** 고친 뒤 계산 칸을 다시 구해요 */
   derive?: (row: Row) => Row;
 };
@@ -38,6 +40,7 @@ export function mockList<Row extends { id: string }>({
   inputs,
   required = [],
   check,
+  checkRow,
   derive = (row) => row,
 }: Options<Row>): MockList {
   return {
@@ -72,6 +75,8 @@ export function mockList<Row extends { id: string }>({
         if (problem) return { status: 400, error: problem };
         (next as Record<string, unknown>)[key] = value;
       }
+      const rowProblem = checkRow?.(next);
+      if (rowProblem) return { status: 400, error: rowProblem };
       const saved = derive(next);
       all[index] = saved;
       return { row: saved };

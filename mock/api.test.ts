@@ -36,9 +36,9 @@ test('그룹에 없는 계정과 로그인 실패도 흉내 내요', () => {
 });
 
 test('없는 API는 약속한 오류 모양 { message }로 404를 줘요', () => {
-  expect(handleMock({ method: 'GET', url: '/invoices' }, ok)).toEqual({
+  expect(handleMock({ method: 'GET', url: '/nope' }, ok)).toEqual({
     status: 404,
-    json: { message: '가짜 서버에 아직 없는 API예요: GET /invoices' },
+    json: { message: '가짜 서버에 아직 없는 API예요: GET /nope' },
   });
 });
 
