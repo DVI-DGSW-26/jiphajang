@@ -9,7 +9,7 @@ import { type RefObject, useCallback, useLayoutEffect, useState } from 'react';
 /** 위아래로 더 그려 둘 행 수. 빨리 스크롤해도 빈 곳이 덜 보여요 */
 const OVERSCAN = 12;
 /** 아직 재지 못했을 때(시험 환경 등) 쓰는 값 */
-const FALLBACK_ROW_HEIGHT = 33;
+const FALLBACK_ROW_HEIGHT = 44;
 const FALLBACK_VIEWPORT = 900;
 
 export type RowWindow = { start: number; end: number };

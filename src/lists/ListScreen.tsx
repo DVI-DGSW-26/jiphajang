@@ -1,15 +1,15 @@
 import { type ReactNode, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
-import { Button } from '../components/Button.tsx';
 import { EmptyState } from '../components/EmptyState.tsx';
 import { Grid } from '../components/grid/Grid.tsx';
 import type { GridColumn } from '../components/grid/gridModel.ts';
 import { isPeriod, monthPeriod, type Period, PeriodFilter } from '../components/PeriodFilter.tsx';
-import { useToast } from '../components/Toast.tsx';
 import { Page } from '../layout/Page.tsx';
-import { ApiError, type AuthMe } from '../lib/api.ts';
+import type { AuthMe } from '../lib/api.ts';
 import { formatFileDate } from '../lib/format.ts';
-import { patchListRow, useList } from '../lib/useList.ts';
+import { useList } from '../lib/useList.ts';
+import { ListError } from './ListError.tsx';
+import { useRowEdit } from './useRowEdit.ts';
 
 /** 주소창의 `?from=&to=`. 없거나 틀리면 이번 달 */
 function usePeriod(today: Date): [Period, (period: Period) => void] {
@@ -61,26 +61,8 @@ export function ListScreen<Row>({
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const { rows, total, state, reload, replaceRow } = useList<Row>(path, period);
-  const toast = useToast();
   const canEdit = me.role === 'REPORTER';
-
-  const onEdit = useCallback(
-    async (row: Row, column: GridColumn<Row>, value: string | null) => {
-      const id = rowKey(row);
-      const same = (item: Row) => rowKey(item) === id;
-      // 엑셀처럼 바로 바꿔 보여주고, 서버가 계산 칸까지 채운 행으로 다시 바꿔요
-      replaceRow(same, { ...row, [column.key]: value });
-      try {
-        replaceRow(same, await patchListRow<Row>(path, id, { [column.key]: value }));
-      } catch (error) {
-        replaceRow(same, row);
-        const reason = error instanceof Error ? error.message : '';
-        toast(`${rowLabel(row)}의 ${column.header}을 저장하지 못했어요. ${reason}`.trim(), 'bad');
-        throw error;
-      }
-    },
-    [path, rowKey, rowLabel, replaceRow, toast],
-  );
+  const onEdit = useRowEdit({ path, rowKey, rowLabel, replaceRow });
 
   const loading = state.status === 'loading';
   const hasInputs = columns.some((column) => column.edit);
@@ -133,37 +115,5 @@ export function ListScreen<Row>({
         />
       )}
     </Page>
-  );
-}
-
-function ListError({
-  title,
-  error,
-  onRetry,
-}: {
-  title: string;
-  error: unknown;
-  onRetry: () => void;
-}) {
-  if (error instanceof ApiError && error.status === 404) {
-    return (
-      <EmptyState
-        title="서버에 아직 이 목록이 없어요"
-        description={`서버 담당이 ${title} API를 만들면 여기에 나와요. 지금은 가짜 서버(npm run dev:mock)로 볼 수 있어요.`}
-      />
-    );
-  }
-  return (
-    <EmptyState
-      title="목록을 불러오지 못했어요"
-      description={
-        error instanceof Error && error.message ? error.message : '서버가 답하지 않아요.'
-      }
-      actions={
-        <Button variant="primary" onClick={onRetry}>
-          다시 불러오기
-        </Button>
-      }
-    />
   );
 }

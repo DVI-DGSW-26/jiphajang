@@ -26,8 +26,12 @@ export type ListState =
  * 기간 안의 행을 **전부** 받아요. 화면은 엑셀처럼 한 장에 길게 보여주고, 필터·정렬도
  * 화면에서 해요 — 그러려면 행이 다 있어야 해요. 받는 동안 받은 만큼 먼저 보여줘요.
  * 첫 쪽을 받은 뒤 나머지 쪽은 `PARALLEL_PAGES`개씩 동시에 받아요.
+ *
+ * `period`가 `null`이면 기간 없이 전부 받아요 — 마스터처럼 기간과 상관없는 목록이에요.
  */
-export function useList<T>(path: string, period: Period) {
+export function useList<T>(path: string, period: Period | null) {
+  const from = period?.from;
+  const to = period?.to;
   const [rows, setRows] = useState<T[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [state, setState] = useState<ListState>({ status: 'loading' });
@@ -43,8 +47,7 @@ export function useList<T>(path: string, period: Period) {
 
     const fetchPage = (page: number) => {
       const query = new URLSearchParams({
-        from: period.from,
-        to: period.to,
+        ...(from && to ? { from, to } : {}),
         page: String(page),
         size: String(LIST_PAGE_SIZE),
       });
@@ -85,7 +88,7 @@ export function useList<T>(path: string, period: Period) {
     });
 
     return () => controller.abort();
-  }, [path, period.from, period.to, attempt]);
+  }, [path, from, to, attempt]);
 
   const reload = useCallback(() => setAttempt((current) => current + 1), []);
 
@@ -94,7 +97,22 @@ export function useList<T>(path: string, period: Period) {
     setRows((current) => current.map((row) => (same(row) ? next : row)));
   }, []);
 
-  return { rows, total, state, reload, replaceRow };
+  /** 새로 만든 행을 끝에 더해요. 다시 받지 않아 표의 필터·정렬이 그대로예요 */
+  const appendRow = useCallback((row: T) => {
+    setRows((current) => [...current, row]);
+    setTotal((current) => (current === null ? current : current + 1));
+  }, []);
+
+  return { rows, total, state, reload, replaceRow, appendRow };
+}
+
+/** 새 행을 보내고, 서버가 계산 칸까지 채운 행을 받아요. POST라 자동으로 다시 보내지 않아요 */
+export function postListRow<T>(path: string, values: Record<string, string | null>): Promise<T> {
+  return apiFetch<T>(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(values),
+  });
 }
 
 /** 고친 칸만 보내고, 서버가 계산 칸까지 다시 구한 행을 받아요 */

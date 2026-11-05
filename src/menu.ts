@@ -1,21 +1,22 @@
 /**
- * 메뉴와 결과 목록 — 개발 범위(`docs/scope-schedule.md`).
- * 상단 바 메뉴 다섯 개, 결과 메뉴 아래에 결과 다섯 개예요.
- * (범위의 여섯째 결과 “현지 창고 재고 및 선적 관리”는 재고·선적 메뉴예요.)
+ * 메뉴 — 해외 출고 범위(`docs/overseas-plan.md` 3장). 업무 순서대로예요.
+ *
+ * 결과 목록(`RESULTS`)은 범위 밖이라 메뉴에서 뺐어요. 국내 출고를 시작하면 다시 써요.
  */
 
 export type MenuItem = { path: string; label: string };
 
 export const MENU: MenuItem[] = [
-  { path: '/invoices', label: 'Invoice' },
-  { path: '/ledger', label: '출하 원장' },
-  { path: '/results', label: '결과' },
-  { path: '/stock', label: '재고·선적' },
+  { path: '/containers', label: '컨테이너 입고' },
+  { path: '/invoices/new', label: '인보이스 작성' },
+  { path: '/shipments', label: '출고 확정' },
+  { path: '/collections', label: '수금 관리' },
+  { path: '/stock', label: '재고 현황' },
   { path: '/master', label: '마스터' },
 ];
 
 /** 로그인하면 처음 보는 화면 */
-export const HOME_PATH = '/ledger';
+export const HOME_PATH = '/invoices/new';
 
 export type ResultItem = {
   slug: string;

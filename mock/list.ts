@@ -19,12 +19,14 @@ type Options<Row extends { id: string }> = {
   path: string;
   /** 가게 전체 행. 고친 값은 개발 서버를 끄기 전까지 남아요 */
   rows: () => Row[];
-  /** 기간으로 거를 날짜 */
-  date: (row: Row) => string;
+  /** 기간으로 거를 날짜. 없으면 기간과 상관없는 목록이에요 (마스터) */
+  date?: (row: Row) => string;
   /** 직접 입력 칸 — 고칠 수 있는 것은 이것뿐이에요 */
   inputs: readonly (keyof Row & string)[];
+  /** 비울 수 없는 칸 */
+  required?: readonly (keyof Row & string)[];
   /** 칸 값이 틀리면 문구. 맞으면 `null` */
-  check?: (key: keyof Row & string, value: string) => string | null;
+  check?: (key: keyof Row & string, value: string, row: Row) => string | null;
   /** 고친 뒤 계산 칸을 다시 구해요 */
   derive?: (row: Row) => Row;
 };
@@ -34,6 +36,7 @@ export function mockList<Row extends { id: string }>({
   rows,
   date,
   inputs,
+  required = [],
   check,
   derive = (row) => row,
 }: Options<Row>): MockList {
@@ -44,7 +47,7 @@ export function mockList<Row extends { id: string }>({
       const to = params.get('to') ?? '9999-99-99';
       const page = Math.max(0, Number(params.get('page') ?? 0) || 0);
       const size = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(params.get('size') ?? 500) || 500));
-      const matched = rows().filter((row) => date(row) >= from && date(row) <= to);
+      const matched = date ? rows().filter((row) => date(row) >= from && date(row) <= to) : rows();
       return { items: matched.slice(page * size, (page + 1) * size), total: matched.length };
     },
     patch(id, body) {
@@ -62,7 +65,10 @@ export function mockList<Row extends { id: string }>({
         if (value !== null && typeof value !== 'string') {
           return { status: 400, error: '값은 글자나 빈 값이어야 해요.' };
         }
-        const problem = value === null ? null : check?.(key as keyof Row & string, value);
+        if (value === null && (required as readonly string[]).includes(key)) {
+          return { status: 400, error: `‘${key}’는 비울 수 없어요.` };
+        }
+        const problem = value === null ? null : check?.(key as keyof Row & string, value, current);
         if (problem) return { status: 400, error: problem };
         (next as Record<string, unknown>)[key] = value;
       }

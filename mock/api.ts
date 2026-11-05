@@ -21,9 +21,17 @@ import { exportDeclarations } from './exportDeclarations.ts';
 import { ledger } from './ledger.ts';
 import type { MockList } from './list.ts';
 import { localInvoices } from './localInvoices.ts';
+import { customerList, masterAction, partList, warehouseList } from './overseas/master.ts';
 
 /** 가짜 목록. 받기·고치기는 모두 같은 약속이에요 (`mock/list.ts`) */
-const MOCK_LISTS: MockList[] = [exportDeclarations, localInvoices, ledger];
+const MOCK_LISTS: MockList[] = [
+  exportDeclarations,
+  localInvoices,
+  ledger,
+  customerList,
+  warehouseList,
+  partList,
+];
 
 export type MockOptions = {
   role: 'REPORTER' | 'VIEWER';
@@ -116,6 +124,14 @@ export function handleMock(
       return { status: 204 };
 
     default: {
+      const action = masterAction(request.method.toUpperCase(), url.pathname);
+      if (action) {
+        if (!bearer) return message(401, '로그인해 주세요.');
+        if (action.write && options.role !== 'REPORTER') {
+          return message(403, '보고자만 고칠 수 있어요.');
+        }
+        return action.run(request.body);
+      }
       const list = MOCK_LISTS.find((item) => item.path === url.pathname);
       if (request.method.toUpperCase() === 'GET' && list) {
         if (!bearer) return message(401, '로그인해 주세요.');

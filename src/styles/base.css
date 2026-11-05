@@ -32,9 +32,7 @@ body {
 .jh-topbar__inner {
   display: flex;
   align-items: center;
-  max-width: var(--max-width);
-  height: 56px;
-  margin: 0 auto;
+  height: var(--height-topbar);
   padding: 0 var(--space-3);
 }
 
@@ -161,7 +159,7 @@ body {
 }
 
 .jh-topbar__logout {
-  min-height: 30px;
+  min-height: 34px;
   padding: 0 10px;
   background: transparent;
   border: 1px solid var(--grey-700);
@@ -182,7 +180,7 @@ body {
   opacity: 0.6;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 960px) {
   .jh-topbar__inner {
     gap: var(--space-3);
   }
@@ -190,8 +188,11 @@ body {
   .jh-topbar__name {
     display: none;
   }
+}
 
-  /* 메뉴가 더 있다는 걸 오른쪽 끝을 흐리게 해서 보여줘요 */
+/* 글자가 커서 이 폭 아래에서는 메뉴가 한 줄에 다 안 들어가요.
+ * 메뉴가 더 있다는 걸 오른쪽 끝을 흐리게 해서 보여줘요 */
+@media (max-width: 1180px) {
   .jh-topbar__nav {
     padding-right: var(--space-4);
     mask-image: linear-gradient(to right, #000 calc(100% - var(--space-4)), transparent);
@@ -311,24 +312,21 @@ a.jh-button {
   text-align: center;
 }
 
-/* 가짜 서버 띠가 있으면 로그인 화면이 그만큼 길어져 스크롤이 생겨요. 띠 높이(31px)를 빼요 */
+/* 가짜 서버 띠가 있으면 로그인 화면이 그만큼 길어져 스크롤이 생겨요. 띠 높이(줄높이 + 여백 + 선)를 빼요 */
 .jh-mock-banner ~ .jh-auth {
-  min-height: calc(100dvh - 31px);
+  min-height: calc(100dvh - (var(--size-small) * 1.45 + 13px));
 }
 
-/* 목록 화면: 화면 폭을 다 써요. 상단 바도 같이 넓혀 왼쪽 끝을 맞춰요 */
+/* 목록 화면: 화면 폭을 다 써요 */
 .jh-main--wide {
   max-width: none;
 }
 
-body:has(.jh-main--wide) .jh-topbar__inner {
-  max-width: none;
-}
-
-/* 휴대폰 폭에서는 다른 화면과 같은 좌우 여백 */
+/* 상단 바는 어느 화면에서나 같은 폭이에요. 목록 화면과 왼쪽 끝이 맞아요.
+ * 휴대폰 폭에서는 다른 화면과 같은 좌우 여백 */
 @media (min-width: 641px) {
   .jh-main--wide,
-  body:has(.jh-main--wide) .jh-topbar__inner {
+  .jh-topbar__inner {
     padding-inline: var(--space-4);
   }
 }

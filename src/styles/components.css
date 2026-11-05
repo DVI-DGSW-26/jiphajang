@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 36px;
+  min-height: var(--height-control);
   padding: 0 var(--space-3);
   background: var(--paper);
   border: 1px solid var(--line);
@@ -75,7 +75,7 @@
   padding: 0 4px;
   border-radius: 3px;
   color: var(--text-tertiary);
-  font: 500 11px / 16px var(--font-mono);
+  font: 500 var(--size-label) / 1.4 var(--font-mono);
 }
 
 .jh-button--primary .jh-button__ext {
@@ -105,7 +105,7 @@
 
 .jh-input {
   width: 100%;
-  min-height: 36px;
+  min-height: var(--height-control);
   padding: 0 12px;
   background: var(--paper);
   border: 1px solid var(--line);
@@ -129,7 +129,7 @@
 }
 
 .jh-input--auto {
-  padding-right: 64px;
+  padding-right: 84px;
   background: var(--paper-warm);
   color: var(--text-secondary);
 }
@@ -140,7 +140,7 @@
 }
 
 .jh-input--auto.jh-input--number {
-  padding-right: 64px;
+  padding-right: 84px;
 }
 
 .jh-input[aria-invalid="true"] {
@@ -170,14 +170,13 @@
 .jh-source {
   display: inline-flex;
   align-items: center;
-  height: 18px;
+  height: 1.55em;
   padding: 0 5px;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 3px;
   color: var(--text-tertiary);
   font: var(--type-label);
-  font-size: 11px;
   white-space: nowrap;
 }
 
@@ -191,7 +190,7 @@
 .jh-badge {
   display: inline-flex;
   align-items: center;
-  height: 22px;
+  height: 1.8em;
   padding: 0 8px;
   border-radius: var(--radius-sm);
   font: var(--type-label);
@@ -243,7 +242,7 @@
 
 .jh-table th,
 .jh-table td {
-  height: 40px;
+  height: var(--height-table-row);
   padding: 0 10px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
@@ -385,10 +384,63 @@
 
 .jh-dialog {
   width: 100%;
-  max-width: 400px;
+  max-width: 460px;
   padding: var(--space-4);
   background: var(--paper);
   border-radius: var(--radius-lg);
+}
+
+.jh-dialog--form {
+  max-width: 560px;
+  max-height: calc(100dvh - 2 * var(--space-3));
+  overflow: auto;
+}
+
+.jh-dialog__table {
+  margin-bottom: var(--space-3);
+}
+
+.jh-dialog__table .jh-table-wrap {
+  max-height: 220px;
+}
+
+/* 칸이 많아도 창이 스크롤되지 않게, 폭이 되면 두 줄로 놓아요 */
+.jh-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: start;
+  gap: 12px var(--space-3);
+}
+
+.jh-form > [role="alert"] {
+  grid-column: 1 / -1;
+}
+
+/* ── 탭 ──────────────────────────────────────────────── */
+.jh-tabs {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.jh-tabs__link {
+  padding: 8px 2px;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font: var(--type-body);
+  text-decoration: none;
+}
+
+.jh-tabs__link:hover {
+  color: var(--text-primary);
+}
+
+.jh-tabs__link[aria-current="page"] {
+  border-bottom-color: var(--ink);
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .jh-dialog__title {
@@ -420,6 +472,15 @@
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-top: var(--space-4);
+}
+
+.jh-dialog--form .jh-dialog__title {
+  margin-bottom: var(--space-3);
+}
+
+.jh-form .jh-dialog__actions {
+  grid-column: 1 / -1;
+  margin-top: 8px;
 }
 
 /* ── 빈 화면 ──────────────────────────────────────────
@@ -573,7 +634,7 @@
 
 .jh-grid__wrap {
   max-width: 100%;
-  max-height: max(360px, calc(100dvh - 310px));
+  max-height: max(360px, calc(100dvh - 360px));
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
@@ -597,10 +658,10 @@
 
 /* biome-ignore lint/style/noDescendingSpecificity: 확인 필요 행 규칙과 다른 속성이라 겹치지 않아요 */
 .jh-grid__table td {
-  height: 32px;
+  height: var(--height-row);
   /* 위로 스크롤할 때 고정된 머리줄에 가리지 않게 */
-  scroll-margin-top: 41px;
-  scroll-margin-bottom: 41px;
+  scroll-margin-top: calc(var(--height-table-row) + 1px);
+  scroll-margin-bottom: calc(var(--height-table-row) + 1px);
 }
 
 .jh-grid__table thead th {
@@ -626,8 +687,8 @@
 .jh-grid__filter-button {
   display: inline-grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);

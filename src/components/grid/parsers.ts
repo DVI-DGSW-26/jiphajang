@@ -10,6 +10,40 @@ export function parseText(text: string): ParseResult {
   return { value: value === '' ? null : value };
 }
 
+/** 빈 칸을 받지 않는 칸. 빈 칸이면 `message`를 보여줘요 */
+export function required(
+  parse: (text: string) => ParseResult,
+  message: string,
+): (text: string) => ParseResult {
+  return (text) => {
+    const result = parse(text);
+    return 'value' in result && result.value === null ? { error: message } : result;
+  };
+}
+
+/** 0 이상의 정수. 쉼표는 빼고 읽어요 — 결제조건 일수 */
+export function parseWholeNumber(text: string): ParseResult {
+  const value = text.replaceAll(',', '').trim();
+  if (value === '') return { value: null };
+  if (/^\d+$/.test(value)) return { value: String(Number(value)) };
+  return { error: '0 이상의 정수로 넣어 주세요. 예: 30' };
+}
+
+/** 1 이상의 정수. 쉼표는 빼고 읽어요 — 박스당 수량 */
+export function parsePositiveWhole(text: string): ParseResult {
+  const result = parseWholeNumber(text);
+  if ('value' in result && result.value === '0') return { error: '1 이상으로 넣어 주세요.' };
+  return 'error' in result ? { error: '1 이상의 정수로 넣어 주세요. 예: 100' } : result;
+}
+
+/** 제품코드는 인보이스 번호 앞자리예요. 소문자로 쳐도 대문자로 바꿔요 */
+export function parseProductCode(text: string): ParseResult {
+  const value = text.trim().toUpperCase();
+  if (value === '') return { value: null };
+  if (/^[A-Z0-9]+$/.test(value)) return { value };
+  return { error: '영문과 숫자로만 넣어 주세요. 예: MT' };
+}
+
 /** `2026-10-12`, `2026.10.12`, `2026/10/12`, `2026-1-5` 모두 받아서 `YYYY-MM-DD`로 */
 export function parseDate(text: string): ParseResult {
   const value = text.trim();
